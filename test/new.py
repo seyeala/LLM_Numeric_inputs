@@ -44,7 +44,7 @@ print('inputT')
 input_ids = inputT['input_ids'].to(device)
 
 print(input_ids)
-outT=model(input_ids, max_length=2)
+outT=model(input_ids)
 last_hidden_state = outT.last_hidden_state
 
 print(last_hidden_state)
