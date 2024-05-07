@@ -93,7 +93,7 @@ _, predicted_indices = torch.max(probabilities, dim=-1)
 # Decode the token indices to text
 decoded_text = numeric_lm.tokenizer.decode(predicted_indices.tolist()[0])  # Assuming single batch
 
-print(decoded_text)
+print('ff', decoded_text)
 
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
@@ -102,7 +102,7 @@ numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=Tr
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello how are you?.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
-print(output)
+print('FT', output)
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True)
@@ -120,4 +120,4 @@ numeric_lm = NumericLMWrapper(model_name, project_input=Tr, project_output=False
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
-print(output)
+print('TT',output)
