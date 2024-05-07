@@ -20,20 +20,23 @@ class NumericLMWrapper(nn.Module):
 
     def forward(self, inputs):
         if self.project_input:
-            # Assume inputs is a batch of single numeric values
+            # Project the numeric input to the embedding dimension
             embedded_input = self.input_projection(inputs.unsqueeze(-1))  # Adding missing batch dimension
 
-            # Generate position ids for the length of the sequence
-            position_ids = torch.arange(0, self.model.config.n_positions).unsqueeze(0).to(inputs.device)
-            outputs = self.model(inputs_embeds=embedded_input.repeat(1, self.model.config.n_positions, 1), position_ids=position_ids)
+            # Generate a sequence length that you want to process (not necessarily maximum)
+            sequence_length = 1  # You can change this to the desired sequence length
+            position_ids = torch.arange(0, sequence_length).unsqueeze(0).to(inputs.device)
+
+            # Prepare the model inputs
+            inputs_embeds = embedded_input.repeat(1, sequence_length, 1)
+            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids)
         else:
             outputs = self.model(**inputs)
 
         if self.project_output:
-            # Assuming you are looking to output the projection of the last token's embedding
-            logits = outputs.logits  # Ensure logits are being generated
+            logits = outputs.logits
             last_hidden_state = outputs.last_hidden_state if hasattr(outputs, 'last_hidden_state') else logits
-            projected_output = self.output_projection(last_hidden_state[:, -1, :])  # Project last token
+            projected_output = self.output_projection(last_hidden_state[:, -1, :])
             return projected_output
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
