@@ -23,13 +23,23 @@ class NumericLMWrapper(nn.Module):
     def forward(self, inputs):
         if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
-            numeric_embeds = self.input_projection(numeric_inputs)
-            # We need to adjust how we handle inputs here:
-            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids']
-            sequence_length = input_ids.size(1)
-            numeric_embeds_expanded = numeric_embeds.expand(-1, sequence_length, -1)
-            inputs_embeds = torch.cat([numeric_embeds_expanded, input_ids], dim=0)  # Adjust dimensions appropriately
-            outputs = self.model(inputs_embeds=inputs_embeds, return_dict=True)
+            numeric_embeds = self.input_projection(numeric_inputs)  # Shape: [num_numeric_values, embedding_dim]
+
+            # Tokenize the text inputs and get embeddings
+            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(numeric_inputs.device)
+            text_embeds = self.model.transformer.wte(input_ids)  # Shape: [batch_size, seq_length, embedding_dim]
+
+            # We need to adjust how we handle the concatenation of numeric and text embeddings
+            # Option: Repeat numeric embeddings to match sequence length of text embeddings if necessary
+            if numeric_embeds.size(0) < text_embeds.size(1):
+                # Repeating the numeric embeddings to cover the whole sequence length
+                repeats = text_embeds.size(1) // numeric_embeds.size(0)
+                numeric_embeds = numeric_embeds.repeat(repeats, 1)[:text_embeds.size(1), :]
+
+            # Combine embeddings
+            combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
+
+            outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
         else:
             outputs = self.model(**inputs, return_dict=True)
 
@@ -39,6 +49,7 @@ class NumericLMWrapper(nn.Module):
             return projected_output
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
+
 
     def _process_mixed_input(self, input_text):
         # Extract numeric values between $$ and &&
