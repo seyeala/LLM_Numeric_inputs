@@ -39,7 +39,7 @@ class NumericLMWrapper(nn.Module):
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
 # Example usage
-model_name = "gpt2"  # substitute with the actual model you are using
+model_name = "lmsys/vicuna-7b-v1.5" # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
