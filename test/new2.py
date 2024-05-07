@@ -64,7 +64,7 @@ model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True)
 
 # Example of text input and getting output
-inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
+inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello how are you?.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print(output)
 # Example usage
@@ -74,4 +74,14 @@ numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=Tru
 # Example of numeric input and getting numeric output
 input_numeric = torch.tensor([[0.5]])  # Example numeric batch input
 output = numeric_lm(input_numeric)  # Ensured input is already 2D
+print(output)
+
+
+
+model_name = "gpt2"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
+
+# Example of text input and getting output
+inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
+output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print(output)
