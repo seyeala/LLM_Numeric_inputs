@@ -20,12 +20,14 @@ class NumericLMWrapper(nn.Module):
 
     def forward(self, inputs):
         if self.project_input:
+            # Assuming inputs is a tensor for numeric input
             embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
             inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
             position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
         else:
+            # Assuming inputs is a dictionary with text input
             outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
 
         if self.project_output:
@@ -35,6 +37,14 @@ class NumericLMWrapper(nn.Module):
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
+# Example usage
+model_name = "gpt2"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True)
+
+# Example of text input and getting output
+inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
+output = numeric_lm(inputs)  # Passing dictionary when project_input is False
+print(output)
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True)
