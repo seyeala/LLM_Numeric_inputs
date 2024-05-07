@@ -37,7 +37,7 @@ class NumericLMWrapper(nn.Module):
 
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
-numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True)
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True)
 
 # Example of numeric input and getting numeric output
 input_numeric = torch.tensor([[0.5]])  # Example numeric batch input
