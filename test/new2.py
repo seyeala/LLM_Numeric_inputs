@@ -58,7 +58,7 @@ numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=Fa
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Who are you.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
-print(output)
+print(inputs,output)
 
 
 
