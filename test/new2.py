@@ -38,12 +38,25 @@ class NumericLMWrapper(nn.Module):
         # Return logits or token ids if not projecting output
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
+    def generate_text(self, input_text, **generate_kwargs):
+        if not self.project_input and not self.project_output:
+            # Regular text generation
+            input_ids = self.tokenizer.encode(input_text, return_tensors="pt")
+            outputs = self.model.generate(input_ids, **generate_kwargs)
+            return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        else:
+            raise NotImplementedError("Generate method is not implemented for projected input/output.")
+
+
+
+
+
 # Example usage
-model_name = "lmsys/vicuna-7b-v1.5" # substitute with the actual model you are using
+model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
-inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
+inputs = {"input_ids": numeric_lm.tokenizer.encode("Who are you.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print(output)
 
