@@ -49,7 +49,7 @@ print(output)
 
 
 
-probabilities = torch.nn.functional.softmax(outputs, dim=-1)
+probabilities = torch.nn.functional.softmax(output, dim=-1)
 
 # Get the most probable next token indices
 _, predicted_indices = torch.max(probabilities, dim=-1)
