@@ -72,7 +72,7 @@ numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=Fal
 input_text = "Hello $$100.5&& world $$200.1&&!"
 inputs = {"input_text": input_text}
 output = numeric_lm(inputs)
-print(output)
+print(input_text,output)
 
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
@@ -81,7 +81,7 @@ numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=Fa
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Who are you.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
-print(inputs,output)
+print(inputs,inputs,output)
 
 
 
