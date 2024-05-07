@@ -45,6 +45,13 @@ input_ids = inputT['input_ids'].to(device)
 
 print(input_ids)
 outT=model(input_ids)
-last_hidden_state = outT.last_hidden_state
+
+logits = outT.logits
+
+# Access hidden states (if set to return them)
+hidden_states = outT.hidden_states  # This will be None if not set as above
+
+# If you only want the last hidden state (similar to 'last_hidden_state' in some models)
+last_hidden_state = hidden_states[-1] if hidden_states is not None else None
 
 print(last_hidden_state)
