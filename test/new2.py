@@ -22,7 +22,10 @@ class NumericLMWrapper(nn.Module):
         if self.project_input:
             # Assume inputs is a batch of single numeric values
             embedded_input = self.input_projection(inputs.unsqueeze(-1))  # Adding missing batch dimension
-            outputs = self.model(inputs_embeds=embedded_input.repeat(1, self.model.config.n_positions, 1))
+
+            # Generate position ids for the length of the sequence
+            position_ids = torch.arange(0, self.model.config.n_positions).unsqueeze(0).to(inputs.device)
+            outputs = self.model(inputs_embeds=embedded_input.repeat(1, self.model.config.n_positions, 1), position_ids=position_ids)
         else:
             outputs = self.model(**inputs)
 
