@@ -23,18 +23,17 @@ class NumericLMWrapper(nn.Module):
             # Assuming inputs has a shape [batch_size, 1] where 1 is the numeric input per example
             embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
 
-            # Define the number of positions for which you want to expand your input embeddings
-            sequence_length = 1  # Adjust this as necessary for your application
-
-            # Generating position IDs for each position in the sequence
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.shape[0], 1).to(inputs.device)
-
-            # Repeating the embeddings across the sequence length if necessary
+            # Expand input embeddings across the sequence length
+            sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
             inputs_embeds = embedded_input.unsqueeze(1).repeat(1, sequence_length, 1)
+
+            # Generate position IDs for each position in the sequence
+            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
 
             # Feed into the model
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids)
         else:
+            # Standard model input handling
             outputs = self.model(**inputs)
 
         if self.project_output:
@@ -45,12 +44,11 @@ class NumericLMWrapper(nn.Module):
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
-
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True)
 
 # Example of numeric input and getting numeric output
-input_numeric = torch.tensor([0.5, 1.5, 2.5])  # Example numeric batch input
-output = numeric_lm(input_numeric)
+input_numeric = torch.tensor([[0.5], [1.5], [2.5]])  # Example numeric batch input
+output = numeric_lm(input_numeric.unsqueeze(-1))  # Ensure input is 2D
 print(output)
