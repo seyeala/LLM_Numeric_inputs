@@ -20,26 +20,31 @@ class NumericLMWrapper(nn.Module):
 
     def forward(self, inputs):
         if self.project_input:
-            # Project the numeric input to the embedding dimension
-            embedded_input = self.input_projection(inputs.unsqueeze(-1))  # Adding missing batch dimension
+            # Assuming inputs has a shape [batch_size, 1] where 1 is the numeric input per example
+            embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
 
-            # Generate a sequence length that you want to process (not necessarily maximum)
-            sequence_length = 1  # You can change this to the desired sequence length
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).to(inputs.device)
+            # Define the number of positions for which you want to expand your input embeddings
+            sequence_length = 1  # Adjust this as necessary for your application
 
-            # Prepare the model inputs
-            inputs_embeds = embedded_input.repeat(1, sequence_length, 1)
+            # Generating position IDs for each position in the sequence
+            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.shape[0], 1).to(inputs.device)
+
+            # Repeating the embeddings across the sequence length if necessary
+            inputs_embeds = embedded_input.unsqueeze(1).repeat(1, sequence_length, 1)
+
+            # Feed into the model
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids)
         else:
             outputs = self.model(**inputs)
 
         if self.project_output:
-            logits = outputs.logits
-            last_hidden_state = outputs.last_hidden_state if hasattr(outputs, 'last_hidden_state') else logits
+            # Extracting the last token's hidden state to project to a numeric output
+            last_hidden_state = outputs.last_hidden_state  # Assuming this exists, check your model's output
             projected_output = self.output_projection(last_hidden_state[:, -1, :])
             return projected_output
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
+
 
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
