@@ -21,19 +21,17 @@ class NumericLMWrapper(nn.Module):
             self.output_projection = nn.Linear(embedding_dim, 1)
 
     def forward(self, inputs):
-        if self.project_input and self.mixed_input:
-            text_inputs, numeric_inputs = self._process_mixed_input(inputs)
+        if self.mixed_input:
+            text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             numeric_embeds = self.input_projection(numeric_inputs)
-            all_inputs_embeds = torch.cat([text_inputs, numeric_embeds], dim=1)
-            outputs = self.model(inputs_embeds=all_inputs_embeds, return_dict=True, output_hidden_states=True)
-        elif self.project_input:
-            embedded_input = self.input_projection(inputs)
-            sequence_length = self.model.config.n_positions
-            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
-            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
+            # We need to adjust how we handle inputs here:
+            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids']
+            sequence_length = input_ids.size(1)
+            numeric_embeds_expanded = numeric_embeds.expand(-1, sequence_length, -1)
+            inputs_embeds = torch.cat([numeric_embeds_expanded, input_ids], dim=0)  # Adjust dimensions appropriately
+            outputs = self.model(inputs_embeds=inputs_embeds, return_dict=True)
         else:
-            outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
+            outputs = self.model(**inputs, return_dict=True)
 
         if self.project_output and 'hidden_states' in outputs:
             last_hidden_state = outputs.hidden_states[-1]
@@ -50,13 +48,10 @@ class NumericLMWrapper(nn.Module):
         # Replace numeric values in text with a placeholder or remove
         processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
 
-        # Tokenize text normally
-        text_inputs = self.tokenizer(processed_text, return_tensors="pt")
-
         # Convert numeric values to tensor and project
         numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1)
 
-        return text_inputs['input_ids'], numeric_inputs
+        return processed_text, numeric_inputs
 
 # Example usage
 model_name = "gpt2"
@@ -67,7 +62,6 @@ input_text = "Hello $$100.5&& world $$200.1&&!"
 inputs = {"input_text": input_text}
 output = numeric_lm(inputs)
 print(output)
-
 
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
