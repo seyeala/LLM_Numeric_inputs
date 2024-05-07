@@ -20,27 +20,16 @@ class NumericLMWrapper(nn.Module):
 
     def forward(self, inputs):
         if self.project_input:
-            # Assuming inputs has a shape [batch_size, 1] where 1 is the numeric input per example
             embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
-
-            # Define the number of positions for which you want to expand your input embeddings
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
-
-            # Expand the embedded input across the sequence length
             inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
-
-            # Generate position IDs for each position in the sequence
             position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
-
-            # Feed into the model
-            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids)
+            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True)
         else:
-            # Standard model input handling
-            outputs = self.model(**inputs)
+            outputs = self.model(**inputs, return_dict=True)
 
         if self.project_output:
-            # Extracting the last token's hidden state to project to a numeric output
-            last_hidden_state = outputs.last_hidden_state  # Assuming this exists, check your model's output
+            last_hidden_state = outputs.hidden_states[-1]  # Use the last hidden state from the outputs
             projected_output = self.output_projection(last_hidden_state[:, -1, :])
             return projected_output
 
