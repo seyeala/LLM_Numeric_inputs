@@ -24,9 +24,9 @@ class NumericLMWrapper(nn.Module):
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
             inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
             position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
-            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True)
+            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
         else:
-            outputs = self.model(**inputs, return_dict=True)
+            outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
 
         if self.project_output:
             last_hidden_state = outputs.hidden_states[-1]  # Use the last hidden state from the outputs
