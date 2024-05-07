@@ -27,16 +27,25 @@ class NumericLMWrapper(nn.Module):
             position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
         else:
-            # Assuming inputs is a dictionary with text input
+            # Assume inputs is a dictionary with text input
             outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
 
-        if self.project_output:
+        if self.project_output and 'hidden_states' in outputs:
             last_hidden_state = outputs.hidden_states[-1]  # Use the last hidden state from the outputs
             projected_output = self.output_projection(last_hidden_state[:, -1, :])
             return projected_output
 
+        # Return logits or token ids if not projecting output
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
+# Example usage
+model_name = "gpt2"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
+
+# Example of text input and getting output
+inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
+output = numeric_lm(inputs)  # Passing dictionary when project_input is False
+print(output)
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True)
