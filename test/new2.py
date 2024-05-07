@@ -23,9 +23,11 @@ class NumericLMWrapper(nn.Module):
             # Assuming inputs has a shape [batch_size, 1] where 1 is the numeric input per example
             embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
 
-            # Expand input embeddings across the sequence length
+            # Define the number of positions for which you want to expand your input embeddings
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
-            inputs_embeds = embedded_input.unsqueeze(1).repeat(1, sequence_length, 1)
+
+            # Expand the embedded input across the sequence length
+            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
 
             # Generate position IDs for each position in the sequence
             position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
@@ -50,5 +52,5 @@ numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=Tru
 
 # Example of numeric input and getting numeric output
 input_numeric = torch.tensor([[0.5], [1.5], [2.5]])  # Example numeric batch input
-output = numeric_lm(input_numeric.unsqueeze(-1))  # Ensure input is 2D
+output = numeric_lm(input_numeric)  # Ensured input is already 2D
 print(output)
