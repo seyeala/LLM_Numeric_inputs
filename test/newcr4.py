@@ -61,7 +61,7 @@ class NumericLMWrapper(nn.Module):
         numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1).to(self.device)
         return processed_text, numeric_inputs
 # Example usage
-model_name = "gpt2"  # substitute with the actual model you are using
+model_name = "openai-community/gpt2-large"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
