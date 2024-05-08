@@ -21,26 +21,29 @@ class NumericLMWrapper(nn.Module):
             self.output_projection = nn.Linear(embedding_dim, 1)
 
     def forward(self, inputs):
-        if self.mixed_input:
-            text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
-            numeric_embeds = self.input_projection(numeric_inputs)  # Shape: [num_numeric_values, embedding_dim]
+        if isinstance(inputs, dict) and 'input_text' in inputs:
+            # If there is text input and possibly mixed input handling
+            if self.mixed_input:
+                text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
+                numeric_embeds = self.input_projection(numeric_inputs.float())  # Ensure float type for projection
+                text_ids = self.tokenizer(text_inputs, return_tensors='pt').input_ids.to(numeric_inputs.device)
+                text_embeds = self.model.transformer.wte(text_ids)
 
-            # Tokenize the text inputs and get embeddings
-            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(numeric_inputs.device)
-            text_embeds = self.model.transformer.wte(input_ids)  # Shape: [batch_size, seq_length, embedding_dim]
+                # Combine embeddings: here assuming you concatenate them, but might need alignment on sequence length
+                combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=1)
 
-            # We need to adjust how we handle the concatenation of numeric and text embeddings
-            # Option: Repeat numeric embeddings to match sequence length of text embeddings if necessary
-            if numeric_embeds.size(0) < text_embeds.size(1):
-                # Repeating the numeric embeddings to cover the whole sequence length
-                repeats = text_embeds.size(1) // numeric_embeds.size(0)
-                numeric_embeds = numeric_embeds.repeat(repeats, 1)[:text_embeds.size(1), :]
-
-            # Combine embeddings
-            combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
-
-            outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
+                outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
+            else:
+                outputs = self.model(**inputs, return_dict=True)
+        elif self.project_input:
+            # Only numeric inputs, no mixed inputs
+            embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
+            sequence_length = self.model.config.n_positions
+            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
+            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
+            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True)
         else:
+            # This block assumes you've already provided suitable dictionary inputs for non-projected usage
             outputs = self.model(**inputs, return_dict=True)
 
         if self.project_output and 'hidden_states' in outputs:
@@ -49,6 +52,7 @@ class NumericLMWrapper(nn.Module):
             return projected_output
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
+
 
 
     def _process_mixed_input(self, input_text):
