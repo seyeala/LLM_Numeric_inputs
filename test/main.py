@@ -7,6 +7,10 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.optim import Adam
 from wrapperNM import NumericLMWrapper
 
+def clear_cuda_memory():
+    """Clears unused memory from CUDA memory cache."""
+    torch.cuda.empty_cache()
+    print("Cleared CUDA memory cache.")
 
 def print_cuda_memory():
     """Prints the current and maximum memory used on CUDA."""
@@ -52,6 +56,7 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
     torch.save(llm.state_dict(), './chk/alignment_number2number/trained_numeric_lm.pth')
 
 # Example usage
+clear_cuda_memory()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model_name = "openai-community/gpt2-large"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
