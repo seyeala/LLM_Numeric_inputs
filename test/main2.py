@@ -29,20 +29,17 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
     scaler = GradScaler()
 
     for epoch in range(num_epochs):
-        # Start the CPU timer
-        cpu_start = time.time()
-
-        # Initialize GPU timers
-        gpu_start_event = torch.cuda.Event(enable_timing=True)
-        gpu_end_event = torch.cuda.Event(enable_timing=True)
-
-        # Start the GPU timer
-        gpu_start_event.record()
+        total_cpu_start = time.time()  # Start total CPU timer for the epoch
+        cumulative_data_cpu_time = 0
 
         for i in range(num_batches):
+            # Measure data loading time separately
+            data_cpu_start = time.time()
             batch_inputs, batch_targets = generate_data(batch_size, min_val, max_val, device)
-            optimizer.zero_grad()
+            data_cpu_end = time.time()
+            cumulative_data_cpu_time += data_cpu_end - data_cpu_start
 
+            optimizer.zero_grad()
             with autocast():
                 outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
@@ -55,18 +52,12 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
             if i % 10 == 0:
                 print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {loss.item()}')
 
-        # End the CPU timer
-        cpu_end = time.time()
-        cpu_time = cpu_end - cpu_start
-
-        # End the GPU timer
-        gpu_end_event.record()
-        torch.cuda.synchronize()  # Wait for the GPU event to complete
-        gpu_time = gpu_start_event.elapsed_time(gpu_end_event) / 1000  # Convert ms to seconds
+        total_cpu_end = time.time()  # End total CPU timer for the epoch
+        total_cpu_time = total_cpu_end - total_cpu_start
 
         print(f'End of Epoch {epoch+1}')
-        print(f'CPU Time for Epoch: {cpu_time:.2f} seconds')
-        print(f'GPU Time for Epoch: {gpu_time:.2f} seconds')
+        print(f'Total Compute Time for Epoch: {total_cpu_time:.2f} seconds')
+        print(f'Cumulative Data Loading CPU Time: {cumulative_data_cpu_time:.2f} seconds')
         print_cuda_memory()
         clear_cuda_memory()
 
