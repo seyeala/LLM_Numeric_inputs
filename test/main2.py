@@ -5,7 +5,7 @@ from torch.optim import Adam
 from wrapperNM import NumericLMWrapper
 import time
 from torch.optim.lr_scheduler import StepLR
-scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+
 
 def generate_data(batch_size, min_val, max_val, device):
     """Generates random data for inputs and targets within a specified range."""
@@ -28,6 +28,7 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val, sh
     llm.train()
     device = next(llm.parameters()).device
     optimizer = Adam(llm.parameters(), lr=lr)
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
     scaler = GradScaler()
 
     for epoch in range(num_epochs):
