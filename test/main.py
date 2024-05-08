@@ -53,7 +53,7 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
 
 
     # Save the trained model state
-    torch.save(llm.state_dict(), './chk/alignment_number2number/trained_numeric_lm.pth')
+    torch.save(llm.state_dict(), 'trained_numeric_lm.pth')
 
 # Example usage
 clear_cuda_memory()
@@ -63,4 +63,4 @@ numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=Tru
 numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
 # Call the alignment function with min and max values for the random numbers
-alignment(numeric_lm, num_batches=100, batch_size=5, lr=0.001, num_epochs=10, min_val=0, max_val=1)
+alignment(numeric_lm, num_batches=10, batch_size=10, lr=0.001, num_epochs=2, min_val=0, max_val=1)
