@@ -20,58 +20,42 @@ class NumericLMWrapper(nn.Module):
         if self.project_output:
             self.output_projection = nn.Linear(embedding_dim, 1)
 
-    def forward(self, inputs):
-        if self.mixed_input:
-            text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
-            numeric_embeds = self.input_projection(numeric_inputs)  # Shape: [num_numeric_values, embedding_dim]
+def forward(self, inputs):
+    # Initialize outputs to None to handle cases where no conditions are met
+    outputs = None
 
-            # Tokenize the text inputs and get embeddings
-            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(numeric_inputs.device)
-            text_embeds = self.model.transformer.wte(input_ids)  # Shape: [batch_size, seq_length, embedding_dim]
+    if self.mixed_input and 'input_text' in inputs:
+        text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
+        numeric_embeds = self.input_projection(numeric_inputs)  # Shape: [num_numeric_values, embedding_dim]
 
-            # We need to adjust how we handle the concatenation of numeric and text embeddings
-            # Option: Repeat numeric embeddings to match sequence length of text embeddings if necessary
-            if numeric_embeds.size(0) < text_embeds.size(1):
-                # Repeating the numeric embeddings to cover the whole sequence length
-                repeats = text_embeds.size(1) // numeric_embeds.size(0)
-                numeric_embeds = numeric_embeds.repeat(repeats, 1)[:text_embeds.size(1), :]
+        # Tokenize the text inputs and get embeddings
+        input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(numeric_inputs.device)
+        text_embeds = self.model.transformer.wte(input_ids)  # Shape: [batch_size, seq_length, embedding_dim]
 
-            # Combine embeddings
-            combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
+        # Combine embeddings
+        combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
+        outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
 
-            outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
-        if self.project_input and not self.mixed_input:
-            # Assuming inputs is a tensor for numeric input
-            embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
-            sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
-            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
-            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
-        if self.project_input and not self.mixed_input:
-            # Assume inputs is a dictionary with text input
-            outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
+    elif self.project_input:
+        embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
+        sequence_length = self.model.config.n_positions
+        inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
+        position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(inputs.device)
+        outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True)
 
-        if self.project_output and 'hidden_states' in outputs:
-            last_hidden_state = outputs.hidden_states[-1]  # Use the last hidden state from the outputs
-            projected_output = self.output_projection(last_hidden_state[:, -1, :])
-            return projected_output
-            outputs = self.model(**inputs, return_dict=True)
+    else:
+        # Regular text input without projection
+        outputs = self.model(**inputs, return_dict=True)
 
-        return outputs.logits if hasattr(outputs, 'logits') else outputs
+    if self.project_output and 'hidden_states' in outputs:
+        last_hidden_state = outputs.hidden_states[-1]  # Use the last hidden state from the outputs
+        projected_output = self.output_projection(last_hidden_state[:, -1, :])
+        return projected_output
 
+    if outputs is None:
+        raise Exception("No valid processing path was executed. Check the input and configuration.")
 
-    def _process_mixed_input(self, input_text):
-        # Extract numeric values between $$ and &&
-        numeric_values = re.findall(r'\$\$(.*?)\&\&', input_text)
-        numeric_values = [float(numeric) for numeric in numeric_values]
-
-        # Replace numeric values in text with a placeholder or remove
-        processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
-
-        # Convert numeric values to tensor and project
-        numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1)
-
-        return processed_text, numeric_inputs
+    return outputs.logits if hasattr(outputs, 'logits') else outputs
 
 # Example usage
 model_name = "gpt2"
