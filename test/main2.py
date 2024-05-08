@@ -31,6 +31,7 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
     for epoch in range(num_epochs):
         total_cpu_start = time.time()  # Start total CPU timer for the epoch
         cumulative_data_cpu_time = 0
+        epoch_loss_sum = 0  # Initialize the loss sum for the epoch
 
         for i in range(num_batches):
             # Measure data loading time separately
@@ -43,6 +44,7 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
             with autocast():
                 outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
+                epoch_loss_sum += loss.item()  # Add current batch loss
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
@@ -54,10 +56,12 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
 
         total_cpu_end = time.time()  # End total CPU timer for the epoch
         total_cpu_time = total_cpu_end - total_cpu_start
+        average_loss = epoch_loss_sum / num_batches  # Calculate average loss for the epoch
 
         print(f'End of Epoch {epoch+1}')
         print(f'Total Compute Time for Epoch: {total_cpu_time:.2f} seconds')
         print(f'Cumulative Data Loading CPU Time: {cumulative_data_cpu_time:.2f} seconds')
+        print(f'Average Loss for Epoch: {average_loss:.4f}')  # Print the average loss
         print_cuda_memory()
         clear_cuda_memory()
 
@@ -69,4 +73,4 @@ model_name = "openai-community/gpt2-large"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
 numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
-alignment(numeric_lm, num_batches=50, batch_size=8, lr=0.003, num_epochs=3, min_val=0, max_val=100)
+alignment(numeric_lm, num_batches=10, batch_size=8, lr=0.003, num_epochs=10, min_val=0, max_val=100)
