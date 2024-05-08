@@ -1,17 +1,15 @@
 import torch
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import re
 
 class NumericLMWrapper(nn.Module):
-    def __init__(self, model_name, project_input=False, project_output=False, mixed_input=False):
+    def __init__(self, model_name, project_input=False, project_output=False):
         super(NumericLMWrapper, self).__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
 
         self.project_input = project_input
         self.project_output = project_output
-        self.mixed_input = mixed_input
         embedding_dim = self.model.config.hidden_size
 
         if self.project_input:
@@ -22,10 +20,6 @@ class NumericLMWrapper(nn.Module):
 
     def forward(self, inputs):
         if self.project_input:
-            if isinstance(inputs, dict) and 'input_ids' in inputs:
-                # Extract tensor from dictionary
-                inputs = inputs['input_ids']
-
             # Assuming inputs is a tensor for numeric input
             embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
@@ -43,6 +37,15 @@ class NumericLMWrapper(nn.Module):
 
         # Return logits or token ids if not projecting output
         return outputs.logits if hasattr(outputs, 'logits') else outputs
+
+# Example usage
+model_name = "gpt2"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
+
+# Example of text input and getting output
+inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
+output = numeric_lm(inputs)  # Passing dictionary when project_input is False
+print(output)
 
 
 
