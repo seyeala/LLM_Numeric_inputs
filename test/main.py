@@ -26,6 +26,7 @@ scaler = GradScaler()
 
 num_epochs = 10
 accumulation_steps = 4  # Number of batches to accumulate gradients over
+numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
 for epoch in range(num_epochs):
     for i, (batch_inputs, batch_targets) in enumerate(dataloader):

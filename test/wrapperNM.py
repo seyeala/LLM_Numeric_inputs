@@ -60,3 +60,21 @@ class NumericLMWrapper(nn.Module):
         processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
         numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1).to(self.device)
         return processed_text, numeric_inputs
+
+    def configure_trainable_layers(self, train_input_projection=True, train_output_projection=True, train_transformer=True):
+        """
+        Configure which layers should be trainable and which should be frozen.
+        """
+        # Configure input projection layer
+        if self.project_input and self.input_projection is not None:
+            for param in self.input_projection.parameters():
+                param.requires_grad = train_input_projection
+
+        # Configure output projection layer
+        if self.project_output and self.output_projection is not None:
+            for param in self.output_projection.parameters():
+                param.requires_grad = train_output_projection
+
+        # Configure the main transformer model
+        for param in self.model.parameters():
+            param.requires_grad = train_transformer
