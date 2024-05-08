@@ -23,10 +23,7 @@ class NumericLMWrapper(nn.Module):
             self.output_projection = nn.Linear(self.embedding_dim, 1).to(self.device)
 
     def forward(self, inputs):
-        # Move inputs to the same device as the model
-        inputs = {key: value.to(self.device) for key, value in inputs.items()}
-
-        if self.mixed_input:
+        if 'input_text' in inputs:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
             input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
@@ -34,17 +31,16 @@ class NumericLMWrapper(nn.Module):
 
             combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
             outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
-
         elif self.project_input:
-            embedded_input = self.input_projection(inputs.to(self.device))
+            embedded_input = self.input_projection(inputs['numeric'].to(self.device))
             sequence_length = self.model.config.n_positions
             inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(self.device)
+            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs_embeds.size(0), 1).to(self.device)
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True)
-
         else:
-            # Assume inputs is a dictionary with text input already on the correct device
-            outputs = self.model(**inputs, return_dict=True)
+            # Ensure tensors are moved to the correct device before passing to the model
+            tensor_inputs = {key: value.to(self.device) if isinstance(value, torch.Tensor) else value for key, value in inputs.items()}
+            outputs = self.model(**tensor_inputs, return_dict=True)
 
         if self.project_output and 'hidden_states' in outputs:
             last_hidden_state = outputs.hidden_states[-1]
@@ -52,6 +48,7 @@ class NumericLMWrapper(nn.Module):
             return projected_output
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
+
 
     def _process_mixed_input(self, input_text):
         numeric_values = re.findall(r'\$\$(.*?)\&\&', input_text)
