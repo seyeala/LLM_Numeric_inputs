@@ -58,7 +58,7 @@ class NumericLMWrapper(nn.Module):
 
 # Example usage
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
+model_name = "EleutherAI/gpt-j-6b"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device=device)
 
 # Mixed input example
