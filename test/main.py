@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import re
-
+from torch.cuda.amp import autocast, GradScaler
 from wrapperNM import NumericLMWrapper
 from torch.utils.data import DataLoader, TensorDataset
 from torch.optim import Adam
