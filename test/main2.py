@@ -28,9 +28,6 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
     optimizer = Adam(llm.parameters(), lr=lr)
     scaler = GradScaler()
 
-    cumulative_cpu_time = 0
-    cumulative_gpu_time = 0
-
     for epoch in range(num_epochs):
         # Start the CPU timer
         cpu_start = time.time()
@@ -44,8 +41,8 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
 
         for i in range(num_batches):
             batch_inputs, batch_targets = generate_data(batch_size, min_val, max_val, device)
-
             optimizer.zero_grad()
+
             with autocast():
                 outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
@@ -60,16 +57,16 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
 
         # End the CPU timer
         cpu_end = time.time()
-        cumulative_cpu_time += cpu_end - cpu_start
+        cpu_time = cpu_end - cpu_start
 
         # End the GPU timer
         gpu_end_event.record()
         torch.cuda.synchronize()  # Wait for the GPU event to complete
-        cumulative_gpu_time += gpu_start_event.elapsed_time(gpu_end_event) / 1000  # Convert ms to seconds
+        gpu_time = gpu_start_event.elapsed_time(gpu_end_event) / 1000  # Convert ms to seconds
 
         print(f'End of Epoch {epoch+1}')
-        print(f'Cumulative CPU Time: {cumulative_cpu_time:.2f} seconds')
-        print(f'Cumulative GPU Time: {cumulative_gpu_time:.2f} seconds')
+        print(f'CPU Time for Epoch: {cpu_time:.2f} seconds')
+        print(f'GPU Time for Epoch: {gpu_time:.2f} seconds')
         print_cuda_memory()
         clear_cuda_memory()
 
@@ -81,4 +78,4 @@ model_name = "openai-community/gpt2-large"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
 numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
-alignment(numeric_lm, num_batches=100, batch_size=5, lr=0.001, num_epochs=10, min_val=0, max_val=100)
+alignment(numeric_lm, num_batches=10, batch_size=10, lr=0.001, num_epochs=2, min_val=0, max_val=100)
