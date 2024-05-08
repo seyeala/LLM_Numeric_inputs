@@ -66,7 +66,18 @@ class NumericLMWrapper(nn.Module):
             return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         else:
             raise NotImplementedError("Generate method is not implemented for projected input/output.")
+    def _process_mixed_input(self, input_text):
+        # Extract numeric values between $$ and &&
+        numeric_values = re.findall(r'\$\$(.*?)\&\&', input_text)
+        numeric_values = [float(numeric) for numeric in numeric_values]
 
+        # Replace numeric values in text with a placeholder or remove
+        processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
+
+        # Convert numeric values to tensor and project
+        numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1)
+
+        return processed_text, numeric_inputs
 
 # Example usage
 model_name = "gpt2"  # substitute with the actual model you are using
