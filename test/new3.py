@@ -119,7 +119,7 @@ numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=Tru
 # Example of numeric input and getting numeric output
 input_numeric = torch.tensor([[0.5]])  # Example numeric batch input
 output = numeric_lm(input_numeric)  # Ensured input is already 2D
-print('TT'output)
+print('TT', output)
 
 
 
