@@ -7,6 +7,13 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.optim import Adam
 from wrapperNM import NumericLMWrapper
 
+
+def print_cuda_memory():
+    """Prints the current and maximum memory used on CUDA."""
+    print(f'Current memory allocated: {torch.cuda.memory_allocated() / 1e6} MB')
+    print(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1e6} MB')
+    torch.cuda.reset_peak_memory_stats()  # Reset the peak memory metric after printing
+
 def generate_data(batch_size, min_val, max_val, device):
     """Generates random data for inputs and targets within a specified range."""
     inputs = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
@@ -38,9 +45,11 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
 
             if i % 10 == 0:  # Print loss every 10 batches
                 print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {loss.item()}')
+        print_cuda_memory()
+
 
     # Save the trained model state
-    torch.save(llm.state_dict(), 'trained_numeric_lm.pth')
+    torch.save(llm.state_dict(), './chk/alignment_number2number/trained_numeric_lm.pth')
 
 # Example usage
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
