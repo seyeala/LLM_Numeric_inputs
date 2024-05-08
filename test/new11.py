@@ -80,7 +80,7 @@ class NumericLMWrapper(nn.Module):
         return processed_text, numeric_inputs
 
 # Example usage
-model_name = "lmsys/vicuna-7b-v1.5" # substitute with the actual model you are using
+model_name = "gpt2" # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
@@ -90,12 +90,9 @@ print(output)
 
 
 
-# Example usage
-model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
-inputs = {"input_ids": numeric_lm.tokenizer.encode("Who are you.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print(inputs,inputs,output)
 
@@ -112,15 +109,12 @@ decoded_text = numeric_lm.tokenizer.decode(predicted_indices.tolist()[0])  # Ass
 print('ff', decoded_text)
 
 # Example usage
-model_name = "lmsys/vicuna-7b-v1.5" # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True)
 
 # Example of text input and getting output
-inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello how are you?.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print('FT', output)
 # Example usage
-model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True)
 
 # Example of numeric input and getting numeric output
@@ -130,11 +124,9 @@ print('TT', output)
 
 
 
-model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False)
 
 
-model_name = "lmsys/vicuna-7b-v1.5"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False, mixed_input=True)
 
 # Mixed input example
