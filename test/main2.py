@@ -73,4 +73,4 @@ model_name = "openai-community/gpt2-large"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
 numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
-alignment(numeric_lm, num_batches=10, batch_size=8, lr=0.003, num_epochs=10, min_val=0, max_val=100)
+alignment(numeric_lm, num_batches=10, batch_size=8, lr=0.001, num_epochs=10, min_val=0, max_val=100)
