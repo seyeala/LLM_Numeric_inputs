@@ -131,3 +131,14 @@ input_text = "Hello $$100.5&& world $$200.1&&!"
 inputs = {"input_text": input_text}
 output = numeric_lm(inputs)
 print(input_text,output)
+
+
+probabilities = torch.nn.functional.softmax(output, dim=-1)
+
+# Get the most probable next token indices
+_, predicted_indices = torch.max(probabilities, dim=-1)
+
+# Decode the token indices to text
+decoded_text = numeric_lm.tokenizer.decode(predicted_indices.tolist()[0])  # Assuming single batch
+
+print( decoded_text)
