@@ -57,7 +57,7 @@ class NumericLMWrapper(nn.Module):
 
         # Return logits or token ids if not projecting output
         return outputs.logits if hasattr(outputs, 'logits') else outputs
-        
+
     def generate_text(self, input_text, **generate_kwargs):
         if not self.project_input and not self.project_output:
             # Regular text generation
@@ -121,3 +121,13 @@ print('TT', output)
 
 model_name = "gpt2"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False)
+
+
+model_name = "gpt2"
+numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False, mixed_input=True)
+
+# Mixed input example
+input_text = "Hello $$100.5&& world $$200.1&&!"
+inputs = {"input_text": input_text}
+output = numeric_lm(inputs)
+print(input_text,output)
