@@ -23,10 +23,13 @@ class NumericLMWrapper(nn.Module):
             self.output_projection = nn.Linear(self.embedding_dim, 1).to(self.device)
 
     def forward(self, inputs):
+        # Move inputs to the same device as the model
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}
+
         if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
-            input_ids = self.tokenizer(text_inputs, return_tensors="pt").to(self.device)['input_ids']
+            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
             text_embeds = self.model.transformer.wte(input_ids)
 
             combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
@@ -56,6 +59,17 @@ class NumericLMWrapper(nn.Module):
         processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
         numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1)
         return processed_text, numeric_inputs
+
+# Example usage
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model_name = "openai-community/gpt2-large"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device=device)
+
+# Mixed input example
+input_text = "Hello $$100.5&& world $$200.1&&!"
+inputs = {"input_text": input_text}
+output = numeric_lm(inputs)
+print(input_text, output)
 
 # Example usage
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
