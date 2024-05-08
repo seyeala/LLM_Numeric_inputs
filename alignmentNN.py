@@ -63,7 +63,6 @@ def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
         if shl and scheduler:
             scheduler.step()
         print_cuda_memory()
-        clear_cuda_memory()
 
     torch.save(llm.state_dict(), model_path)
 
