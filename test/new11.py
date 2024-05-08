@@ -3,17 +3,16 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import re
 
-
 class NumericLMWrapper(nn.Module):
     def __init__(self, model_name, project_input=False, project_output=False, mixed_input=False, device='cpu'):
         super(NumericLMWrapper, self).__init__()
-        self.device = torch.device(device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
 
         self.project_input = project_input
         self.project_output = project_output
         self.mixed_input = mixed_input
+        self.device = torch.device(device)
         self.embedding_dim = self.model.config.hidden_size
 
         if self.project_input:
@@ -22,10 +21,10 @@ class NumericLMWrapper(nn.Module):
         if self.project_output:
             self.output_projection = nn.Linear(self.embedding_dim, 1).to(self.device)
 
-    def forward(self, inputs):
-        # Move inputs to the same device as the model
-        inputs = {key: value.to(self.device) for key, value in inputs.items()}
+        # Set a default sequence length if 'n_positions' is not available
+        self.sequence_length = getattr(self.model.config, 'n_positions', 512)  # default to 512 if n_positions is not set
 
+    def forward(self, inputs):
         if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
@@ -37,9 +36,8 @@ class NumericLMWrapper(nn.Module):
 
         elif self.project_input:
             embedded_input = self.input_projection(inputs.to(self.device))
-            sequence_length = self.model.config.n_positions
-            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1)
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(self.device)
+            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, self.sequence_length, -1)
+            position_ids = torch.arange(0, self.sequence_length).unsqueeze(0).repeat(inputs_embeds.size(0), 1).to(self.device)
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True)
 
         else:
@@ -60,30 +58,30 @@ class NumericLMWrapper(nn.Module):
         numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1)
         return processed_text, numeric_inputs
 
+    def generate_text(self, input_text, **generate_kwargs):
+        if not self.project_input and not self.project_output:
+            # Regular text generation
+            input_ids = self.tokenizer.encode(input_text, return_tensors="pt")
+            outputs = self.model.generate(input_ids, **generate_kwargs)
+            return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        else:
+            raise NotImplementedError("Generate method is not implemented for projected input/output.")
+    def _process_mixed_input(self, input_text):
+        # Extract numeric values between $$ and &&
+        numeric_values = re.findall(r'\$\$(.*?)\&\&', input_text)
+        numeric_values = [float(numeric) for numeric in numeric_values]
+
+        # Replace numeric values in text with a placeholder or remove
+        processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
+
+        # Convert numeric values to tensor and project
+        numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1)
+
+        return processed_text, numeric_inputs
+
 # Example usage
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model_name = "openai-community/gpt2-large"  # substitute with the actual model you are using
-numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device=device)
-
-# Mixed input example
-input_text = "Hello $$100.5&& world $$200.1&&!"
-inputs = {"input_text": input_text}
-output = numeric_lm(inputs)
-print(input_text, output)
-
-# Example usage
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model_name = "openai-community/gpt2-large"  # substitute with the actual model you are using
-numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device=device)
-
-# Mixed input example
-input_text = "Hello $$100.5&& world $$200.1&&!"
-inputs = {"input_text": input_text}
-output = numeric_lm(inputs)
-print(input_text, output)
-
-
-numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False, device=device)
+model_name = "lmsys/vicuna-7b-v1.5" # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello, world!", return_tensors="pt")}
@@ -91,7 +89,10 @@ output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print(output)
 
 
-numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False, device=device)
+
+# Example usage
+model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False)
 
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Who are you.", return_tensors="pt")}
@@ -110,17 +111,17 @@ decoded_text = numeric_lm.tokenizer.decode(predicted_indices.tolist()[0])  # Ass
 
 print('ff', decoded_text)
 
-
-
-numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True, device=device)
+# Example usage
+model_name = "lmsys/vicuna-7b-v1.5" # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True)
 
 # Example of text input and getting output
 inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello how are you?.", return_tensors="pt")}
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print('FT', output)
 # Example usage
-
-numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
+model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
+numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True)
 
 # Example of numeric input and getting numeric output
 input_numeric = torch.tensor([[0.5]])  # Example numeric batch input
@@ -129,10 +130,11 @@ print('TT', output)
 
 
 
-
+model_name = "lmsys/vicuna-7b-v1.5"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False)
 
 
+model_name = "lmsys/vicuna-7b-v1.5"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False, mixed_input=True)
 
 # Mixed input example
