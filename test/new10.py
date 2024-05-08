@@ -3,6 +3,7 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import re
 
+
 class NumericLMWrapper(nn.Module):
     def __init__(self, model_name, project_input=False, project_output=False, mixed_input=False, device='cpu'):
         super(NumericLMWrapper, self).__init__()
@@ -58,7 +59,7 @@ class NumericLMWrapper(nn.Module):
 
 # Example usage
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model_name = "EleutherAI/gpt-j-6b"  # substitute with the actual model you are using
+model_name = "openai-community/gpt2-large"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device=device)
 
 # Mixed input example
@@ -67,8 +68,7 @@ inputs = {"input_text": input_text}
 output = numeric_lm(inputs)
 print(input_text, output)
 
-# Example usage
-model_name = "EleutherAI/gpt-j-6b" # substitute with the actual model you are using
+
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False, device=device)
 
 # Example of text input and getting output
@@ -77,9 +77,6 @@ output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print(output)
 
 
-
-# Example usage
-model_name = "EleutherAI/gpt-j-6b"  # substitute with the actual model you are using
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=False, device=device)
 
 # Example of text input and getting output
@@ -99,8 +96,8 @@ decoded_text = numeric_lm.tokenizer.decode(predicted_indices.tolist()[0])  # Ass
 
 print('ff', decoded_text)
 
-# Example usage
-model_name = "EleutherAI/gpt-j-6b" # substitute with the actual model you are using
+
+
 numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True, device=device)
 
 # Example of text input and getting output
@@ -108,7 +105,7 @@ inputs = {"input_ids": numeric_lm.tokenizer.encode("Hello how are you?.", return
 output = numeric_lm(inputs)  # Passing dictionary when project_input is False
 print('FT', output)
 # Example usage
-model_name = "EleutherAI/gpt-j-6b"  # substitute with the actual model you are using
+
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
 
 # Example of numeric input and getting numeric output
@@ -118,11 +115,10 @@ print('TT', output)
 
 
 
-model_name = "EleutherAI/gpt-j-6b"  # substitute with the actual model you are using
+
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False)
 
 
-model_name = "EleutherAI/gpt-j-6b"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=False, mixed_input=True)
 
 # Mixed input example
