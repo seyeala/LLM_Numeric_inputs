@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import re
 
 class NumericLMWrapper(nn.Module):
     def __init__(self, model_name, project_input=False, project_output=False, mixed_input=False):
