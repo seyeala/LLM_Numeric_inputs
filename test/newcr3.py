@@ -65,7 +65,7 @@ class NumericLMWrapper(nn.Module):
 # Example usage
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model_name = "gpt2"  # Substitute with the actual model you are using
-numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device=device)
+numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, mixed_input=True, device='cpu')
 
 # Mixed input example
 input_text = "Hello $$100.5&& world $$200.1&&!"
