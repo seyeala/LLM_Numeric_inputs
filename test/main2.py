@@ -4,6 +4,8 @@ from torch.cuda.amp import autocast, GradScaler
 from torch.optim import Adam
 from wrapperNM import NumericLMWrapper
 import time
+from torch.optim.lr_scheduler import StepLR
+scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
 
 def generate_data(batch_size, min_val, max_val, device):
     """Generates random data for inputs and targets within a specified range."""
@@ -22,7 +24,7 @@ def clear_cuda_memory():
     torch.cuda.empty_cache()
     print("Cleared CUDA memory cache.")
 
-def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
+def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val, shl=False):
     llm.train()
     device = next(llm.parameters()).device
     optimizer = Adam(llm.parameters(), lr=lr)
@@ -62,8 +64,11 @@ def alignment(llm, num_batches, batch_size, lr, num_epochs, min_val, max_val):
         print(f'Total Compute Time for Epoch: {total_cpu_time:.2f} seconds')
         print(f'Cumulative Data Loading CPU Time: {cumulative_data_cpu_time:.2f} seconds')
         print(f'Average Loss for Epoch: {average_loss:.4f}')  # Print the average loss
+        if shl==True:
+            scheduler.step()
         print_cuda_memory()
-        clear_cuda_memory()
+
+
 
     torch.save(llm.state_dict(), 'trained_numeric_lm.pth')
 
@@ -73,4 +78,4 @@ model_name = "openai-community/gpt2-large"
 numeric_lm = NumericLMWrapper(model_name, project_input=True, project_output=True, device=device)
 numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
-alignment(numeric_lm, num_batches=10, batch_size=8, lr=0.0003, num_epochs=10, min_val=0, max_val=100)
+alignment(numeric_lm, num_batches=10, batch_size=8, lr=0.001, num_epochs=10, min_val=0, max_val=100, shl=True)
