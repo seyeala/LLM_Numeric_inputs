@@ -20,7 +20,26 @@ class NumericLMWrapper(nn.Module):
             self.output_projection = nn.Linear(embedding_dim, 1)
 
     def forward(self, inputs):
-        if self.project_input:
+        if self.mixed_input:
+            text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
+            numeric_embeds = self.input_projection(numeric_inputs)  # Shape: [num_numeric_values, embedding_dim]
+
+            # Tokenize the text inputs and get embeddings
+            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(numeric_inputs.device)
+            text_embeds = self.model.transformer.wte(input_ids)  # Shape: [batch_size, seq_length, embedding_dim]
+
+            # We need to adjust how we handle the concatenation of numeric and text embeddings
+            # Option: Repeat numeric embeddings to match sequence length of text embeddings if necessary
+            if numeric_embeds.size(0) < text_embeds.size(1):
+                # Repeating the numeric embeddings to cover the whole sequence length
+                repeats = text_embeds.size(1) // numeric_embeds.size(0)
+                numeric_embeds = numeric_embeds.repeat(repeats, 1)[:text_embeds.size(1), :]
+
+            # Combine embeddings
+            combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1)
+
+            outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
+        if self.project_input and not self.mixed_input:
             # Assuming inputs is a tensor for numeric input
             embedded_input = self.input_projection(inputs)  # Shape: [batch_size, embedding_dim]
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
@@ -38,6 +57,7 @@ class NumericLMWrapper(nn.Module):
 
         # Return logits or token ids if not projecting output
         return outputs.logits if hasattr(outputs, 'logits') else outputs
+        
     def generate_text(self, input_text, **generate_kwargs):
         if not self.project_input and not self.project_output:
             # Regular text generation
