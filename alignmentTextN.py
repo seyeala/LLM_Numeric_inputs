@@ -91,7 +91,7 @@ def main(config_path):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     numeric_lm = NumericLMWrapper(model_name, project_input=False, project_output=True, device=device)
 
-    # Load the pre-trained model state if availablegf
+    # Load the pre-trained model state if avaxilablegf
     if args.model_path:
         model_state_dict = torch.load(args.model_path)
         numeric_lm.load_state_dict(model_state_dict)
@@ -99,7 +99,8 @@ def main(config_path):
 
     numeric_lm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
 
-    alignmenttxt(numeric_lm, config['num_batches'], config['batch_size'], config['lr'], num_epochs, config['min_val'], config['max_val'], model_path, config['shl'])
+    alignmenttxt(numeric_lm, config, num_epochs, model_path, config['shl'])
+
 
 if __name__ == "__main__":
     main("config.yml")
