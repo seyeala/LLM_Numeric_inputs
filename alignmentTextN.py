@@ -9,8 +9,52 @@ import yaml
 import argparse
 import yaml
 from wrapperNM import NumericLMWrapper
-from alignmentNN import alignment, clear_cuda_memory, print_cuda_memory
+from alignmentNN import clear_cuda_memory, print_cuda_memory
 
+
+def alignmenttxt(llm, config, num_epochs, model_path, shl):
+    llm.train()
+    device = next(llm.parameters()).device
+    optimizer = Adam(llm.parameters(), lr=config['lr'])
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
+    scaler = GradScaler()
+    tokenizer = llm.tokenizer  # Assuming the tokenizer is part of the LLM wrapper
+
+    for epoch in range(num_epochs):
+        total_cpu_start = time.time()
+        cumulative_data_cpu_time = 0
+        epoch_loss_sum = 0
+
+        for i in range(config['num_batches']):
+            data_cpu_start = time.time()
+            batch_inputs, batch_targets = generate_text_data(config['batch_size'], device, tokenizer)
+            data_cpu_end = time.time()
+            cumulative_data_cpu_time += data_cpu_end - data_cpu_start
+
+            optimizer.zero_grad()
+            with autocast():
+                outputs = llm(**batch_inputs)
+                loss = nn.MSELoss()(outputs, batch_targets)
+                epoch_loss_sum += loss.item()
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+            optimizer.zero_grad()
+
+        total_cpu_time = time.time() - total_cpu_start
+        average_loss = epoch_loss_sum / config['num_batches']
+
+        print(f'End of Epoch {epoch+1}')
+        print(f'Total Compute Time for Epoch: {total_cpu_time:.2f} seconds')
+        print(f'Cumulative Data Loading CPU Time: {cumulative_data_cpu_time:.2f} seconds')
+        print(f'Average Loss for Epoch: {average_loss:.4f}')
+        if shl and scheduler:
+            scheduler.step()
+        print_cuda_memory()
+        clear_cuda_memory()
+
+    torch.save(llm.state_dict(), './chk/slignment_txt2number')
 
 
 def generate_text_data(batch_size, device, tokenizer):
