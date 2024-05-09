@@ -61,9 +61,13 @@ def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the model with text inputs.")
-    parser.add_argument("--config", required=True, help="Path to the YAML configuration file.")
-    parser.add_argument("--model_path", help="Path to load the trained model.")
-    parser.add_argument("--save_model_path", help="Path to save the trained model.", default='./chk/trained_model.pth')
+    parser.add_argument("--num_epochs", type=int, help="Number of epochs to train.")
+    parser.add_argument("--min_val", type=float, help="Minimum value for generated data.")
+    parser.add_argument("--max_val", type=float, help="Maximum value for generated data.")
+    parser.add_argument("--model_name", type=str, help="Model name for loading.")
+    parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
+    parser.add_argument("--model_path", type=str, help="Path to save the trained model.")
+    parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
     args = parser.parse_args()
 
     with open(args.config, 'r') as file:
