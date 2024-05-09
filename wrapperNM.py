@@ -3,6 +3,19 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import re
 
+
+def generate_data(batch_size, min_val, max_val, device):
+    """Generates random data for inputs and targets within a specified range."""
+    inputs = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
+    targets = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
+    return inputs, targets
+
+def print_cuda_memory():
+    """Prints the current and maximum memory used on CUDA."""
+    print(f'Current memory allocated: {torch.cuda.memory_allocated() / 1e6} MB')
+    print(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1e6} MB')
+    torch.cuda.reset_peak_memory_stats()
+    
 class NumericLMWrapper(nn.Module):
     def __init__(self, model_name, project_input=False, project_output=False, mixed_input=False, device='cpu'):
         super(NumericLMWrapper, self).__init__()

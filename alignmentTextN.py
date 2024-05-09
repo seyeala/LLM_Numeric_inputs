@@ -5,7 +5,7 @@ from torch.optim import Adam, lr_scheduler
 import time
 import argparse
 import yaml
-from wrapperNM import NumericLMWrapper
+from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory
 
 def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     """Generates text data for inputs."""

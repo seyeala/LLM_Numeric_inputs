@@ -2,22 +2,11 @@ import torch
 from torch import nn
 from torch.cuda.amp import autocast, GradScaler
 from torch.optim import Adam, lr_scheduler
-from wrapperNM import NumericLMWrapper
+from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory
 import time
 import argparse
 import yaml
 
-def generate_data(batch_size, min_val, max_val, device):
-    """Generates random data for inputs and targets within a specified range."""
-    inputs = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
-    targets = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
-    return inputs, targets
-
-def print_cuda_memory():
-    """Prints the current and maximum memory used on CUDA."""
-    print(f'Current memory allocated: {torch.cuda.memory_allocated() / 1e6} MB')
-    print(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1e6} MB')
-    torch.cuda.reset_peak_memory_stats()
 
 def clear_cuda_memory():
     """Clears unused memory from CUDA memory cache."""
@@ -63,6 +52,7 @@ def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
         if shl and scheduler:
             scheduler.step()
         print_cuda_memory()
+        clear_cuda_memory()
 
     torch.save(llm.state_dict(), model_path)
 
