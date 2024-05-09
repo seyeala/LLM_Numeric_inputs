@@ -12,7 +12,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
     text_inputs = ["$$" + str(number.item()) + "&&" for number in inputs]
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
-    targets = torch.rand(batch_size, 1).to(device)
+    targets = torch.rand(batch_size, 1).to(device)  # Dummy targets for example
     return tensor_inputs, targets
 
 def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
@@ -23,31 +23,38 @@ def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
 
     # Load model state if exists
     if load_model_path:
-        llm.load_state_dict(torch.load(load_model_path))
-        print(f"Loaded model from {load_model_path}")
+        try:
+            model_state_dict = torch.load(load_model_path)
+            llm.load_state_dict(model_state_dict)
+            print(f"Loaded model from {load_model_path}")
+        except FileNotFoundError:
+            print(f"No model found at {load_model_path}, starting from scratch.")
 
     llm.train()
 
     for epoch in range(num_epochs):
-        epoch_loss = 0
-
+        total_loss = 0
         for _ in range(config['num_batches']):
             batch_inputs, batch_targets = generate_text_data(config['batch_size'], config['min_val'], config['max_val'], device, llm.tokenizer)
 
             optimizer.zero_grad()
             with autocast():
-                outputs = llm(batch_inputs)
+                output_dict = llm(**batch_inputs)
+                outputs = output_dict.get('logits', output_dict)  # Modify based on your model's output
                 loss = nn.MSELoss()(outputs, batch_targets)
-                epoch_loss += loss.item()
+                total_loss += loss.item()
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
 
-        if shl:
+        if shl and scheduler:
             scheduler.step()
 
-        print(f'Epoch {epoch+1}: Average Loss {epoch_loss / config['num_batches']}')
+        average_loss = total_loss / config['num_batches']
+        print(f'Epoch {epoch + 1}/{num_epochs} - Average Loss: {average_loss:.4f}')
+        print_cuda_memory()
+        clear_cuda_memory()
 
     torch.save(llm.state_dict(), save_model_path)
     print(f"Saved trained model to {save_model_path}")
@@ -55,7 +62,8 @@ def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the model with text inputs.")
     parser.add_argument("--config", required=True, help="Path to the YAML configuration file.")
-    parser.add_argument("--save_model_path", help="Path to save the trained model.")
+    parser.add_argument("--model_path", help="Path to load the trained model.")
+    parser.add_argument("--save_model_path", help="Path to save the trained model.", default='./chk/trained_model.pth')
     args = parser.parse_args()
 
     with open(args.config, 'r') as file:
@@ -65,4 +73,4 @@ if __name__ == "__main__":
     llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, train_transformer=False, device=device)
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
 
-    alignment(llm, config, config['num_epochs'], args.model_path, './chk/stage.path', config['shl'])
+    alignment(llm, config, config['num_epochs'], args.model_path, args.save_model_path, config['shl'])
