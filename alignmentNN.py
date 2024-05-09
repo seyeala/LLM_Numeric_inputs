@@ -8,10 +8,11 @@ import argparse
 import yaml
 
 
-def clear_cuda_memory():
-    """Clears unused memory from CUDA memory cache."""
-    torch.cuda.empty_cache()
-    print("Cleared CUDA memory cache.")
+def generate_data(batch_size, min_val, max_val, device):
+    """Generates random data for inputs and targets within a specified range."""
+    inputs = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
+    targets = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
+    return inputs, targets
 
 def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
     llm.train()

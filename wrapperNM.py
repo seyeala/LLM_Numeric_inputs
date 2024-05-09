@@ -3,12 +3,12 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import re
 
+def clear_cuda_memory():
+    """Clears unused memory from CUDA memory cache."""
+    torch.cuda.empty_cache()
+    print("Cleared CUDA memory cache.")
 
-def generate_data(batch_size, min_val, max_val, device):
-    """Generates random data for inputs and targets within a specified range."""
-    inputs = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
-    targets = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
-    return inputs, targets
+
 
 def print_cuda_memory():
     """Prints the current and maximum memory used on CUDA."""
