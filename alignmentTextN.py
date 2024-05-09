@@ -68,6 +68,8 @@ if __name__ == "__main__":
     parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
     parser.add_argument("--model_path", type=str, help="Path to save the trained model.")
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
+    parser.add_argument("--savestage2", help="Path to save the trained model.", default='./chk/trained_model.pth')
+
     args = parser.parse_args()
 
     with open(args.config, 'r') as file:
@@ -80,4 +82,4 @@ if __name__ == "__main__":
     # Configure which parts of the model should be trainable
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
 
-    alignment(llm, config, config['num_epochs'], args.model_path, args.save_model_path, config['shl'])
+    alignment(llm, config, config['num_epochs'], args.model_path, args.savestage2, config['shl'])
