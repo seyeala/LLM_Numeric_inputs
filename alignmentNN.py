@@ -57,6 +57,7 @@ def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
 
 
     torch.save(llm.state_dict(), model_path)
+    print(f"Saved trained model to {model_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model with adjustable parameters.")
