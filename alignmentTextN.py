@@ -39,8 +39,7 @@ def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
 
             optimizer.zero_grad()
             with autocast():
-                output_dict = llm(**batch_inputs)
-                outputs = output_dict.get('logits', output_dict)  # Modify based on your model's output
+                outputs = llm(**batch_inputs)  # Directly access the tensor output
                 loss = nn.MSELoss()(outputs, batch_targets)
                 total_loss += loss.item()
 
