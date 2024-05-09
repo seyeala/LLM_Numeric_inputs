@@ -37,7 +37,7 @@ The first step is called self alignment of the projectors used in customized tok
 python alignmentNN.py --config './config/config.yaml'
 
 To override settings via command line, for example, changing the number of epochs:
-python train.py --config './config/config.yaml' --num_epochs 100
+python alignmentNN.py --config './config/config.yaml' --num_epochs 100
 
 
 4-Results and Observations
