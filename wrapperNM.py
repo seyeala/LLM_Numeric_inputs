@@ -50,7 +50,6 @@ def forward(self, **inputs):
 
     return outputs.logits if hasattr(outputs, 'logits') else outputs
 
-
     def generate_text(self, input_text, **generate_kwargs):
         if not self.project_input and not self.project_output:
             input_ids = self.tokenizer.encode(input_text, return_tensors="pt").to(self.device)
