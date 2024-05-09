@@ -99,7 +99,7 @@ def main(config_path):
 
     numeric_lm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
 
-    alignment(numeric_lm, config['num_batches'], config['batch_size'], config['lr'], num_epochs, config['min_val'], config['max_val'], model_path, config['shl'])
+    alignmenttxt(numeric_lm, config['num_batches'], config['batch_size'], config['lr'], num_epochs, config['min_val'], config['max_val'], model_path, config['shl'])
 
 if __name__ == "__main__":
     main("config.yml")
