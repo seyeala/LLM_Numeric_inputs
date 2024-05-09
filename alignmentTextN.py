@@ -52,7 +52,7 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
             scaler.step(optimizer)
             scaler.update()
 
-            print(f'Batch {i + 1}: Loss = {loss.item():.4f}, Batch CPU Time = {batch_cpu_end - batch_cpu_start:.2f} seconds')
+            #print(f'Batch {i + 1}: Loss = {loss.item():.4f}, Batch CPU Time = {batch_cpu_end - batch_cpu_start:.2f} seconds')
 
         if shl and scheduler:
             scheduler.step()
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
     parser.add_argument("--model_path", type=str, help="Path to save the trained model.")
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
-    parser.add_argument("--savestage2", help="Path to save the trained model.", default='./chk/trained_model.pth')
+    parser.add_argument("--savestage2", help="Path to save the trained model.", default="./chk/atrained_numeric_lm_stage2.pth")
 
     args = parser.parse_args()
 
