@@ -6,8 +6,8 @@ min_val: 0
 max_val: 100
 model_name: "openai-community/gpt2-large"
 shl: True
-model_path: "./chk/trained_numeric_lm_stage1.pth"
+#model_path: "./chk/trained_numeric_lm_stage1.pth"
 num_batches: 50
 batch_size: 8
 lr: 0.003
-savestage2: "./chk/atrained_numeric_lm_stage2.pth"
+#savestage2: "./chk/atrained_numeric_lm_stage2.pth"
