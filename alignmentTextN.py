@@ -83,4 +83,4 @@ if __name__ == "__main__":
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignment(llm, config, config['num_epochs'], args.model_path, args.save_model_path, config['shl'])
+    alignment(llm, config, config['num_epochs'], args.model_path, args.savestage2, config['shl'])
