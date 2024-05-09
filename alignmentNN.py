@@ -14,6 +14,7 @@ def generate_data(batch_size, min_val, max_val, device):
     targets = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
     return inputs, targets
 
+clear_cuda_memory()
 def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
     llm.train()
     device = next(llm.parameters()).device
@@ -53,7 +54,7 @@ def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
         if shl and scheduler:
             scheduler.step()
         print_cuda_memory()
-        clear_cuda_memory()
+
 
     torch.save(llm.state_dict(), model_path)
 

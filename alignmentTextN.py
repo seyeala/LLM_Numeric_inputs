@@ -14,8 +14,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
     targets = torch.rand(batch_size, 1).to(device)  # Dummy targets for example
     return tensor_inputs, targets
-
-def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
+def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
@@ -33,30 +32,40 @@ def alignment(llm, config, num_epochs, load_model_path, save_model_path, shl):
     llm.train()
 
     for epoch in range(num_epochs):
-        total_loss = 0
-        for _ in range(config['num_batches']):
+        total_cpu_start = time.time()  # Start the timer for total CPU time this epoch
+        cumulative_data_cpu_time = 0  # Initialize cumulative CPU data loading time
+        epoch_loss_sum = 0  # Sum of losses for the epoch
+
+        for i in range(config['num_batches']):
+            batch_cpu_start = time.time()  # Start the timer for one batch
             batch_inputs, batch_targets = generate_text_data(config['batch_size'], config['min_val'], config['max_val'], device, llm.tokenizer)
+            batch_cpu_end = time.time()  # End the timer for one batch
+            cumulative_data_cpu_time += batch_cpu_end - batch_cpu_start  # Accumulate the CPU time
 
             optimizer.zero_grad()
             with autocast():
                 outputs = llm(**batch_inputs)  # Directly access the tensor output
                 loss = nn.MSELoss()(outputs, batch_targets)
-                total_loss += loss.item()
+                epoch_loss_sum += loss.item()
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
 
+            print(f'Batch {i + 1}: Loss = {loss.item():.4f}, Batch CPU Time = {batch_cpu_end - batch_cpu_start:.2f} seconds')
+
         if shl and scheduler:
             scheduler.step()
 
-        average_loss = total_loss / config['num_batches']
-        print(f'Epoch {epoch + 1}/{num_epochs} - Average Loss: {average_loss:.4f}')
+        total_cpu_time = time.time() - total_cpu_start  # Total CPU time for the epoch
+        average_loss = epoch_loss_sum / config['num_batches']  # Average loss for the epoch
+        print(f'Epoch {epoch + 1}: Average Loss = {average_loss:.4f}, Total Compute Time = {total_cpu_time:.2f} seconds, Cumulative Data Loading CPU Time = {cumulative_data_cpu_time:.2f} seconds')
         print_cuda_memory()
         clear_cuda_memory()
 
     torch.save(llm.state_dict(), save_model_path)
     print(f"Saved trained model to {save_model_path}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the model with text inputs.")
@@ -82,4 +91,4 @@ if __name__ == "__main__":
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignment(llm, config, config['num_epochs'], args.model_path, args.savestage2, config['shl'])
+    alignmenttext(llm, config, config['num_epochs'], args.model_path, args.savestage2, config['shl'])
