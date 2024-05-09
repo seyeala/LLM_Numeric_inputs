@@ -14,6 +14,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
     targets = torch.rand(batch_size, 1).to(device)  # Dummy targets for example
     return tensor_inputs, targets
+
 def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
@@ -61,10 +62,10 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
         average_loss = epoch_loss_sum / config['num_batches']  # Average loss for the epoch
         print(f'Epoch {epoch + 1}: Average Loss = {average_loss:.4f}, Total Compute Time = {total_cpu_time:.2f} seconds, Cumulative Data Loading CPU Time = {cumulative_data_cpu_time:.2f} seconds')
         print_cuda_memory()
-        clear_cuda_memory()
 
     torch.save(llm.state_dict(), save_model_path)
     print(f"Saved trained model to {save_model_path}")
+
 
 
 if __name__ == "__main__":
