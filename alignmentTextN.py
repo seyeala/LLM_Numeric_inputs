@@ -24,6 +24,7 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
     # Load model state if exists
     if load_model_path:
         try:
+            print(load_model_path)
             model_state_dict = torch.load(load_model_path)
             llm.load_state_dict(model_state_dict)
             print(f"Loaded model from {load_model_path}")
