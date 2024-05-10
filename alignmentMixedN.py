@@ -10,16 +10,16 @@ from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory,loa
 
 
 
-
 def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
-    """Generates text data for inputs."""
+    """Generates text data for inputs including both numeric and text data."""
     numeric_inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
-    # Directly convert each number to string without calling .item()
-    text_inputs = ["$$" + str(number) + "&&" for number in numeric_inputs.squeeze().tolist()]
-    tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
-    batch_inputs = {"input_text": tensor_inputs, "numeric_inputs": numeric_inputs}
-    targets = numeric_inputs.to(device)  # If targets are meant to be the same as inputs
+    text_inputs = ["$$" + str(number.item()) + "&&" for number in numeric_inputs.squeeze()]
+    # No longer need to tokenize here if it is handled in the forward method
+    batch_inputs = {"input_text": text_input, "numeric_inputs": numeric_inputs}
+    targets = numeric_inputs.to(device)  # Assuming targets are numeric
     return batch_inputs, targets
+
+
 def alignmentmixed(llm, config, num_epochs, model_path_load, model_path_save, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # Example of instantiating the model for loading with project_input=True
-    llm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True,  mixed_input=True, device=device)
+    llm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True, mixed_input=True, device=device)
 
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
     llm.mixed_input=False
