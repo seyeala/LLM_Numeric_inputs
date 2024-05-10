@@ -17,7 +17,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     # Directly convert each number to string without calling .item()
     text_inputs = ["$$" + str(number) + "&&" for number in numeric_inputs.squeeze().tolist()]
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
-    batch_inputs = {"input_text": tensor_inputs, "numeric_inputs": numeric_data}
+    batch_inputs = {"input_text": tensor_inputs, "numeric_inputs": numeric_inputs}
     targets = numeric_inputs.to(device)  # If targets are meant to be the same as inputs
     return batch_inputs, targets
 
