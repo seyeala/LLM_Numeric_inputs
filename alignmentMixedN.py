@@ -9,15 +9,15 @@ from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory,loa
 
 
 
-
 def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     """Generates text data for inputs including both numeric and text data."""
     numeric_inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
     text_inputs = ["$$" + str(number.item()) + "&&" for number in numeric_inputs.squeeze()]
-    # No longer need to tokenize here if it is handled in the forward method
-    batch_inputs = {"input_text": text_input, "numeric_inputs": numeric_inputs}
+    # Ensure we use 'text_inputs' instead of the incorrect 'text_input'
+    batch_inputs = {"input_text": text_inputs, "numeric_inputs": numeric_inputs}
     targets = numeric_inputs.to(device)  # Assuming targets are numeric
     return batch_inputs, targets
+
 
 
 def alignmentmixed(llm, config, num_epochs, model_path_load, model_path_save, shl):
