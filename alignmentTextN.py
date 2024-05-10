@@ -14,6 +14,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
     targets = torch.rand(batch_size, 1).to(device)  # Dummy targets for example
     return tensor_inputs, targets
+
 def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
@@ -23,6 +24,7 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
     # Load model state if exists
     if load_model_path:
         try:
+            print(load_model_path)
             model_state_dict = torch.load(load_model_path)
             llm.load_state_dict(model_state_dict)
             print(f"Loaded model from {load_model_path}")
@@ -44,14 +46,15 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
 
             optimizer.zero_grad()
             with autocast():
-                # Ensure only expected arguments are passed to the model
-                outputs = llm(batch_inputs['input_ids'], attention_mask=batch_inputs['attention_mask'])  # Directly access the tensor output
+                outputs = llm(**batch_inputs)  # Directly access the tensor output
                 loss = nn.MSELoss()(outputs, batch_targets)
                 epoch_loss_sum += loss.item()
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
+
+            #print(f'Batch {i + 1}: Loss = {loss.item():.4f}, Batch CPU Time = {batch_cpu_end - batch_cpu_start:.2f} seconds')
 
         if shl and scheduler:
             scheduler.step()
@@ -64,7 +67,8 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
     torch.save(llm.state_dict(), save_model_path)
     print(f"Saved trained model to {save_model_path}")
 
-if __name__ == "__main__":
+
+
     parser = argparse.ArgumentParser(description="Train the model with text inputs.")
     parser.add_argument("--num_epochs", type=int, help="Number of epochs to train.")
     parser.add_argument("--min_val", type=float, help="Minimum value for generated data.")
