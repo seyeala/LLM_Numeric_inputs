@@ -100,17 +100,17 @@ class NumericLMWrapper(nn.Module):
 
 
         else:
-        if isinstance(inputs, dict):
-                # Ensuring that all tensors are moved to the correct device
-                inputs = {key: value.to(self.device) if isinstance(value, torch.Tensor) else value for key, value in inputs.items()}
-                outputs = self.model(**inputs, return_dict=True)
+            if isinstance(inputs, dict):
+                    # Ensuring that all tensors are moved to the correct device
+                    inputs = {key: value.to(self.device) if isinstance(value, torch.Tensor) else value for key, value in inputs.items()}
+                    outputs = self.model(**inputs, return_dict=True)
 
-                if self.project_output and 'hidden_states' in outputs:
-                    last_hidden_state = outputs.hidden_states[-1]
-                    projected_output = self.output_projection(last_hidden_state[:, -1, :])
-                    return projected_output
+                    if self.project_output and 'hidden_states' in outputs:
+                        last_hidden_state = outputs.hidden_states[-1]
+                        projected_output = self.output_projection(last_hidden_state[:, -1, :])
+                        return projected_output
 
-                return outputs.logits if hasattr(outputs, 'logits') else outputs
+                    return outputs.logits if hasattr(outputs, 'logits') else outputs
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
 
