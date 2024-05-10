@@ -91,7 +91,7 @@ if __name__ == "__main__":
     config['num_epochs'] = args.num_epochs if args.num_epochs is not None else config.get('num_epochs', 2)
     config['min_val'] = args.min_val if args.min_val is not None else config.get('min_val', 0)
     config['max_val'] = args.max_val if args.max_val is not None else config.get('max_val', 100)
-    config['model_name'] = args.model_name if args.model_name is not None else config.get('model_name', 'openai-community/gpt2-large')
+    config['model_name'] = args.model_name if args.model_name is not None else config.get('model_name', 'openai-community/gpt2')
     config['shl'] = args.shl if args.shl is not None else config.get('shl', False)
     config['model_path_save'] = args.model_path_save if args.model_path_save is not None else config.get('model_path', './chk/trained_numeric_lm.pth')
 
