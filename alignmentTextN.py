@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # Example of instantiating the model for loading with project_input=True
-    llm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True, device=device)
+    llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, device=device)
 
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
     llm.mixed_input=False
