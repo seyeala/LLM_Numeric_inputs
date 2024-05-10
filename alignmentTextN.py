@@ -24,13 +24,16 @@ def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl
     # Load model state if exists
     if model_path_load:
         try:
-            print(model_path_load)
+            print(f"Attempting to load model from {model_path_load}")
             model_state_dict = torch.load(model_path_load)
             llm.load_state_dict(model_state_dict)
-            print(f"Loaded model from {model_path_load}")
+            print(f"Successfully loaded model from {model_path_load}")
         except FileNotFoundError:
             print(f"No model found at {model_path_load}, starting from scratch.")
-
+        except RuntimeError as e:
+            print(f"Failed to load model. Error: {e}")
+            print(f"Check if the model architecture during saving matches the one during loading.")
+            
     llm.train()
 
     for epoch in range(num_epochs):
