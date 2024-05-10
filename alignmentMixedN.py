@@ -11,7 +11,7 @@ from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory,loa
 
 
 
-def generate_text_data(batch_version, min_val, max_val, device, tokenizer):
+def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     """Generates text data for inputs."""
     numeric_inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
     # Directly convert each number to string without calling .item()
