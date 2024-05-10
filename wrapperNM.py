@@ -35,7 +35,7 @@ class NumericLMWrapper(nn.Module):
         if self.project_output:
             self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
 
-    def forward(self, inputs):
+    def forward(self, **inputs):
         if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
@@ -50,8 +50,13 @@ class NumericLMWrapper(nn.Module):
             position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(self.device)
             outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
         else:
-            inputs = {key: value.to(self.device) for key, value in inputs.items()}  # Move all input dictionary tensors to the device
-            outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
+            #inputs = {key: value.to(self.device) for key, value in inputs.items()}  # Move all input dictionary tensors to the device
+            #outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
+
+            # Handling standard text input through the tokenizer
+            if 'input_ids' in inputs:
+                inputs = {key: value.to(self.device) for key, value in inputs.items()}
+                outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
 
         if self.project_output and 'hidden_states' in outputs:
             last_hidden_state = outputs.hidden_states[-1].to(self.device)  # Move hidden states to the correct device
