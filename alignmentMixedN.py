@@ -7,25 +7,16 @@ import argparse
 import yaml
 from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory,load_specific_weights
 
-def _process_mixed_input(self, text_inputs):
-    numeric_values = []
-    processed_texts = []
 
-    for text_input in text_inputs:
-        found_numbers = re.findall(r'\$\$(.*?)\&\&', text_input)
-        found_numbers = [float(num) for num in found_numbers]
-        numeric_values.extend(founds_numbers)
 
-        # Remove the numeric placeholders after extracting values
-        processed_text = re.sub(r'\$\$.*?\&\&', '', text_input)
-        processed_texts.append(processed_text)
-
-    numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1).to(self.device)
-
-    # Join the processed texts if necessary or handle them as a batch if your model requires that
-    processed_text = ' '.join(processed_texts)
-
-    return processed_text, numeric_inputs
+def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
+    """Generates text data for inputs including both numeric and text data."""
+    numeric_inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
+    text_inputs = ["$$" + str(number.item()) + "&&" for number in numeric_inputs.squeeze()]
+    # Ensure we use 'text_inputs' instead of the incorrect 'text_input'
+    batch_inputs = {"input_text": text_inputs, "numeric_inputs": numeric_inputs}
+    targets = numeric_inputs.to(device)  # Assuming targets are numeric
+    return batch_inputs, targets
 
 
 
