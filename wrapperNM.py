@@ -58,8 +58,7 @@ class NumericLMWrapper(nn.Module):
         self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
 
     def forward(self, inputs):
-        # If mixed input is enabled, process the mixed data
-         if self.mixed_input:
+        if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             tokenized_inputs = self.tokenizer(text_inputs, return_tensors="pt", padding=True, truncation=True)
             input_ids = tokenized_inputs['input_ids'].to(self.device)
@@ -86,9 +85,8 @@ class NumericLMWrapper(nn.Module):
                 projected_output = self.output_projection(last_hidden_state[:, -1, :])
                 return projected_output
 
-        return outputs.logits if hasattr(outputs, 'logits') else outputs
+            return outputs.logits if hasattr(outputs, 'logits') else outputs
 
-        # If project input is enabled (but not mixed input)
         elif self.project_input:
             embedded_input = self.input_projection(inputs.to(self.device))  # Ensure the input tensor is on the correct device
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
@@ -103,7 +101,6 @@ class NumericLMWrapper(nn.Module):
 
             return outputs.logits if hasattr(outputs, 'logits') else outputs
 
-        # Otherwise, assume normal dictionary input
         else:
             inputs = {key: value.to(self.device) for key, value in inputs.items()}  # Move all input dictionary tensors to the device
             outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
@@ -114,7 +111,6 @@ class NumericLMWrapper(nn.Module):
                 return projected_output
 
             return outputs.logits if hasattr(outputs, 'logits') else outputs
-
 
 
 
