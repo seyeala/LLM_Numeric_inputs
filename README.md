@@ -40,6 +40,11 @@ The second stage of  the projectors and diffison layers icnludes the input of st
 
 python alignmentTextN.py --config './config/config.yaml' --num_epochs 2 --model_path_load ./chk/selfalignedNN.path --model_path_save ./chk/selfalignedTextN.path
 
+
+You can sequential reqpeat these steps. Everytime the output linnear arrays or(both arrays) are further aligned.
+
+
+
 To alig text to number execude the following ()
 python alignmentTextN.py --config './config/config.yaml' --num_epochs 100
 
