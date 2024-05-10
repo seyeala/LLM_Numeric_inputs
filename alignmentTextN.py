@@ -7,6 +7,21 @@ import argparse
 import yaml
 from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory
 
+
+def load_specific_weights(model, load_path):
+    # Load the entire state dictionary from the file
+    full_state_dict = torch.load(load_path)
+
+    # Filter the state dict to only include weights for the projection layers and the language model
+    filtered_state_dict = {name: param for name, param in full_state_dict.items()
+                           if 'input_projection' in name or 'output_projection' in name or 'model' in name}
+
+    # Load the filtered state dictionary into the model
+    model.load_state_dict(filtered_state_dict, strict=False)  # Use strict=False to ignore non-matching keys
+
+    return model
+
+
 def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     """Generates text data for inputs."""
     inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
@@ -25,8 +40,7 @@ def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl
     if model_path_load:
         try:
             print(f"Attempting to load model from {model_path_load}")
-            model_state_dict = torch.load(model_path_load)
-            llm.load_state_dict(model_state_dict,strict=False)
+            load_specific_weights(llm, model_path_load)
             print(f"Successfully loaded model from {model_path_load}")
         except FileNotFoundError:
             print(f"No model found at {model_path_load}, starting from scratch.")
