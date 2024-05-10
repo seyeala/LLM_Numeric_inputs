@@ -20,8 +20,6 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     batch_inputs = {"input_text": tensor_inputs, "numeric_inputs": numeric_inputs}
     targets = numeric_inputs.to(device)  # If targets are meant to be the same as inputs
     return batch_inputs, targets
-
-
 def alignmentmixed(llm, config, num_epochs, model_path_load, model_path_save, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
@@ -43,12 +41,8 @@ def alignmentmixed(llm, config, num_epochs, model_path_load, model_path_save, sh
             batch_inputs, batch_targets = generate_text_data(config['batch_size'], config['min_val'], config['max_val'], device, llm.tokenizer)
             optimizer.zero_grad()
             with autocast():
-                if llm.mixed_input:
-                    # Assume generate_text_data provides a dictionary that includes both 'input_text' and numeric values
-                    outputs = llm(batch_inputs)
-                else:
-                    # Ensure only the tensor part is passed if using input_projection directly
-                    outputs = llm(batch_inputs['input_ids'])
+                # Directly pass the entire `batch_inputs` dictionary when mixed input is enabled
+                outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
 
             scaler.scale(loss).backward()
