@@ -29,11 +29,9 @@ class NumericLMWrapper(nn.Module):
         self.mixed_input = mixed_input
         embedding_dim = self.model.config.hidden_size
 
-        if self.project_input:
-            self.input_projection = nn.Linear(1, embedding_dim).to(self.device)
+        self.input_projection = nn.Linear(1, embedding_dim).to(self.device)
 
-        if self.project_output:
-            self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
+        self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
 
 
     def forward(self, inputs):
