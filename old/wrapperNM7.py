@@ -56,7 +56,6 @@ class NumericLMWrapper(nn.Module):
 
         self.input_projection = nn.Linear(1, embedding_dim).to(self.device)
         self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
-
     def forward(self, inputs):
         if self.mixed_input:
             # Process mixed input
@@ -105,8 +104,6 @@ class NumericLMWrapper(nn.Module):
                 return projected_output
 
             return outputs.logits if hasattr(outputs, 'logits') else outputs
-
-
 
 
     def generate_text(self, input_text, **generate_kwargs):
