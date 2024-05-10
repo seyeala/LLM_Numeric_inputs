@@ -116,7 +116,7 @@ class NumericLMWrapper(nn.Module):
                 projected_output = self.output_projection(last_hidden_state[:, -1, :].to(self.device))
                 return projected_output
 
-    return outputs.logits if hasattr(outputs, 'logits') else outputs
+        return outputs.logits if hasattr(outputs, 'logits') else outputs
 
     def generate_text(self, input_text, **generate_kwargs):
         if not self.project_input and not self.project_output:
