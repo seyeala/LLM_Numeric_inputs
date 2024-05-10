@@ -15,7 +15,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     targets = torch.rand(batch_size, 1).to(device)  # Dummy targets for example
     return tensor_inputs, targets
 
-def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl):
+def alignmenttext(llm, config, num_epochs, load_model_path, model_path_save, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
@@ -64,8 +64,8 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
         print(f'Epoch {epoch + 1}: Average Loss = {average_loss:.4f}, Total Compute Time = {total_cpu_time:.2f} seconds, Cumulative Data Loading CPU Time = {cumulative_data_cpu_time:.2f} seconds')
         print_cuda_memory()
 
-    torch.save(llm.state_dict(), save_model_path)
-    print(f"Saved trained model to {save_model_path}")
+    torch.save(llm.state_dict(), model_path_save)
+    print(f"Saved trained model to {model_path_save}")
 
 
 if __name__ == "__main__":
@@ -75,9 +75,9 @@ if __name__ == "__main__":
     parser.add_argument("--max_val", type=float, help="Maximum value for generated data.")
     parser.add_argument("--model_name", type=str, help="Model name for loading.")
     parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
-    parser.add_argument("--model_path", type=str, help="Path to save the trained model.")
+    parser.add_argument("--model_path_load", type=str, help="Path to save the trained model.")
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
-    parser.add_argument("--savestage2", help="Path to save the trained model.", default="./chk/atrained_numeric_lm_stage2.pth")
+    parser.add_argument("--model_path_save", help="Path to save the trained model.", default="./chk/atrained_numeric_lm_stage2.pth")
 
     # Parse arguments from command line
     args = parser.parse_args()
@@ -95,8 +95,8 @@ if __name__ == "__main__":
     max_val = config.get('max_val', 100.0)  # Default value
     model_name = config.get('model_name', 'openai-community/gpt2-large')  # Default value
     shl = config.get('shl', False)  # Default value
-    model_path = config.get('model_path', './chk/trained_numeric_lm.pth')  # Default value
-    savestage2 = config.get('savestage2', './chk/atrained_numeric_lm_stage2.pth')  # Default value
+    model_path_load = config.get('model_path_load', './chk/trained_numeric_lm.pth')  # Default value
+    model_path_save = config.get('model_path_save', './chk/atrained_numeric_lm_stage2.pth')  # Default value
 
     # Override with command line arguments if provided
     if args.num_epochs is not None:
@@ -109,14 +109,14 @@ if __name__ == "__main__":
         model_name = args.model_name
     if args.shl is not None:
         shl = args.shl
-    if args.model_path is not None:
-        model_path = args.model_path
-    if args.savestage2 is not None:
-        savestage2 = args.savestage2
+    if args.model_path_load is not None:
+        model_path_load = args.model_path_load
+    if args.model_path_save is not None:
+        model_path_save = args.model_path_save
 
     # Training function or whatever you need to do
     print(f"Training with config: epochs={num_epochs}, min_val={min_val}, max_val={max_val}, model={model_name}, scheduler={shl}")
-    print(f"Model will be saved to {model_path} and {savestage2}")
+    print(f"Model will be saved to {model_path_save} and {model_path_save}")
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, device=device)
@@ -127,4 +127,4 @@ if __name__ == "__main__":
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignmenttext(llm, config, config['num_epochs'], args.model_path, args.savestage2, config['shl'])
+    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_save, config['shl'])

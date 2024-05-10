@@ -15,7 +15,7 @@ def generate_data(batch_size, min_val, max_val, device):
     return inputs, targets
 
 clear_cuda_memory()
-def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
+def alignment(llm, config, num_epochs, min_val, max_val, model_path_save, shl):
     llm.train()
     device = next(llm.parameters()).device
     optimizer = Adam(llm.parameters(), lr=config['lr'])
@@ -56,8 +56,8 @@ def alignment(llm, config, num_epochs, min_val, max_val, model_path, shl):
         print_cuda_memory()
 
 
-    torch.save(llm.state_dict(), model_path)
-    print(f"Saved trained model to {model_path}")
+    torch.save(llm.state_dict(), model_path_save)
+    print(f"Saved trained model to {model_path_save}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model with adjustable parameters.")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_val", type=float, help="Maximum value for generated data.")
     parser.add_argument("--model_name", type=str, help="Model name for loading.")
     parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
-    parser.add_argument("--model_path", type=str, help="Path to save the trained model.")
+    parser.add_argument("--model_path_save", type=str, help="Path to save the trained model.")
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
 
     args = parser.parse_args()
@@ -81,10 +81,10 @@ if __name__ == "__main__":
     config['max_val'] = args.max_val if args.max_val is not None else config.get('max_val', 100)
     config['model_name'] = args.model_name if args.model_name is not None else config.get('model_name', 'openai-community/gpt2-large')
     config['shl'] = args.shl if args.shl is not None else config.get('shl', False)
-    config['model_path'] = args.model_path if args.model_path is not None else config.get('model_path', './chk/trained_numeric_lm.pth')
+    config['model_path_save'] = args.model_path_save if args.model_path_save is not None else config.get('model_path', './chk/trained_numeric_lm.pth')
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     numeric_lm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True, device=device)
     numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
-    alignment(numeric_lm, config, config['num_epochs'], config['min_val'], config['max_val'], config['model_path'], config['shl'])
+    alignment(numeric_lm, config, config['num_epochs'], config['min_val'], config['max_val'], config['model_path_save'], config['shl'])
