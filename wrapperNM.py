@@ -3,19 +3,15 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import re
 
+def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
+    """Generates text data for inputs including both numeric and text data."""
+    numeric_inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
+    text_inputs = ["$$" + str(number.item()) + "&&" for number in numeric_inputs.squeeze()]
+    # No longer need to tokenize here if it is handled in the forward method
+    batch_inputs = {"input_text": text_input, "numeric_inputs": numeric_inputs}
+    targets = numeric_inputs.to(device)  # Assuming targets are numeric
+    return batch_inputs, targets
 
-def load_specific_weights(model, load_path):
-    # Load the entire state dictionary from the file
-    full_state_dict = torch.load(load_path)
-
-    # Filter the state dict to only include weights for the projection layers and the language model
-    filtered_state_dict = {name: param for name, param in full_state_dict.items()
-                           if 'input_projection' in name or 'output_projection' in name or 'model' in name}
-
-    # Load the filtered state dictionary into the model
-    model.load_state_dict(filtered_state_dict, strict=False)  # Use strict=False to ignore non-matching keys
-
-    return model
 
 
 def clear_cuda_memory():
@@ -75,12 +71,26 @@ class NumericLMWrapper(nn.Module):
             return outputs.logits if hasattr(outputs, 'logits') else outputs
         else:
             if self.mixed_input:
+
                 text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
-                numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
-                input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
-                text_embeds = self.model.transformer.wte(input_ids)
-                combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1).to(self.device)
-                outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
+                tokenized_inputs = self.tokenizer(text_inputs, return_tensors="pt", padding=True, truncation=True)
+                input_ids = tokenized_inputs['input_ids'].to(self.device)
+                attention_mask = tokenized_inputs['attention_mask'].to(self.device)
+
+                # Prepare embeddings for numeric inputs if they are provided
+                if 'numeric_inputs' in inputs:
+                    numeric_inputs = inputs['numeric_inputs'].to(self.device)
+                    numeric_embeds = self.input_projection(numeric_inputs)
+                    text_embeds = self.model.transformer.wte(input_ids)
+                    combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=1)
+                    outputs = self.model(inputs_embeds=combined_embeds, attention_mask=attention_mask, return_dict=True)
+                else:
+                    outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, return_dict=True)
+
+                if self.project_output and 'hidden_states' in outputs:
+                    last_hidden_state = outputs.hidden_states[-1]
+                    projected_output = self.output_projection(last_hidden_data[:, -1, :])
+                    return projected_output
             elif self.project_input and not self.mixed_input:
                 embedded_input = self.input_projection(inputs.to(self.device))  # Ensure input tensor is on the correct device
                 sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
