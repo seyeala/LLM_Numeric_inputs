@@ -112,7 +112,6 @@ if __name__ == "__main__":
     llm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True, mixed_input=True, device=device)
 
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
-    llm.mixed_input=False
 
     # Ensure the tokenizer has a pad token set
     if llm.tokenizer.pad_token is None:
