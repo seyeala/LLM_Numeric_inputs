@@ -5,21 +5,23 @@ from torch.optim import Adam, lr_scheduler
 import time
 import argparse
 import yaml
-from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory, load_specific_weights
+from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory,load_specific_weights
 
 
 
 
 
 def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
-    """Generates text data for inputs."""
+    """Generates text data formatted for inputs."""
     inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
-    text_inputs = ["$$" + str(number.item()) + "&&" for number in inputs]
+    text_inputs = ["$$" + str(number.item()) + "&&" for number in inputs]  # Create mixed input format if needed
+    # Convert text data into tokenized format if the forward method uses tokenized inputs directly
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
     targets = inputs.to(device)  # Dummy targets for example
-    return tensor_inputs, targets
+    return tensor_inputs, targets  # Return formatted as needed by the model's forward method
 
-def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl):
+
+def alignmentmixed(llm, config, num_epochs, model_path_load, model_path_save, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
@@ -28,50 +30,36 @@ def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl
     # Load model state if exists
     if model_path_load:
         try:
-            print(f"Attempting to load model from {model_path_load}")
-            load_specific_weights(llm, model_path_load)
-            print(f"Successfully loaded model from {model_path_load}")
+            llm.load_state_dict(torch.load(model_path_load))
+            print("Successfully loaded model from:", model_path_load)
         except FileNotFoundError:
-            print(f"No model found at {model_path_load}, starting from scratch.")
-        except RuntimeError as e:
-            print(f"Failed to load model. Error: {e}")
-            print(f"Check if the model architecture during saving matches the one during loading.")
+            print("No model found at:", model_path_net_path_load)
 
     llm.train()
 
     for epoch in range(num_epochs):
-        total_cpu_start = time.time()  # Start the timer for total CPU time this epoch
-        cumulative_data_cpu_time = 0  # Initialize cumulative CPU data loading time
-        epoch_loss_sum = 0  # Sum of losses for the epoch
-
         for i in range(config['num_batches']):
-            batch_cpu_start = time.time()  # Start the timer for one batch
             batch_inputs, batch_targets = generate_text_data(config['batch_size'], config['min_val'], config['max_val'], device, llm.tokenizer)
-            batch_cpu_end = time.time()  # End the timer for one batch
-            cumulative_data_cpu_time += batch_cpu_end - batch_cpu_start  # Accumulate the CPU time
-
             optimizer.zero_grad()
             with autocast():
-                outputs = llm(batch_inputs)  # Directly access the tensor output
+                # If the model is set up for mixed inputs, wrap inputs in a dict
+                if llm.mixed_input:
+                    outputs = llm({"input_text": batch_inputs})  # Ensure inputs are wrapped as needed
+                else:
+                    # For purely numeric/text inputs handled by forward
+                    outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
-                epoch_loss_sum += loss.item()
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
 
-            #print(f'Batch {i + 1}: Loss = {loss.item():.4f}, Batch CPU Time = {batch_cpu_end - batch_cpu_start:.2f} seconds')
-
         if shl and scheduler:
             scheduler.step()
 
-        total_cpu_time = time.time() - total_cpu_start  # Total CPU time for the epoch
-        average_loss = epoch_loss_sum / config['num_batches']  # Average loss for the epoch
-        print(f'Epoch {epoch + 1}: Average Loss = {average_loss:.4f}, Total Compute Time = {total_cpu_time:.2f} seconds, Cumulative Data Loading CPU Time = {cumulative_data_cpu_time:.2f} seconds')
-        print_cuda_memory()
-
     torch.save(llm.state_dict(), model_path_save)
-    print(f"Saved trained model to {model_path_save}")
+    print(f"Saved trained model to {model_profile_path_save}")
+
 
 
 if __name__ == "__main__":
@@ -126,7 +114,7 @@ if __name__ == "__main__":
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # Example of instantiating the model for loading with project_input=True
-    llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, device=device)
+    llm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True,  mixed_input=True, device=device)
 
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
     llm.mixed_input=False
@@ -135,4 +123,4 @@ if __name__ == "__main__":
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_save, config['shl'])
+    alignmentmixed(llm, config, config['num_epochs'], args.model_path_load, args.model_path_save, config['shl'])

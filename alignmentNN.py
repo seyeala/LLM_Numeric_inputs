@@ -11,7 +11,7 @@ import yaml
 def generate_data(batch_size, min_val, max_val, device):
     """Generates random data for inputs and targets within a specified range."""
     inputs = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
-    targets = torch.rand(batch_size, 1).to(device) * (max_val - min_val) + min_val
+    targets = inputs
     return inputs, targets
 
 clear_cuda_memory()
