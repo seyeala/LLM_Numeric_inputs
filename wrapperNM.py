@@ -82,7 +82,7 @@ class NumericLMWrapper(nn.Module):
                 return projected_output
             return outputs.logits if hasattr(outputs, 'logits') else outputs
 
-        elif self.project_input and not self.mixed_input:
+        elif (self.project_input and (not self.mixed_input)):
             embedded_input = self.input_projection(inputs.to(self.device))  # Ensure input tensor is on the correct device
             sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
             inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1).to(self.device)
