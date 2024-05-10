@@ -68,7 +68,7 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
     print(f"Saved trained model to {save_model_path}")
 
 
-
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the model with text inputs.")
     parser.add_argument("--num_epochs", type=int, help="Number of epochs to train.")
     parser.add_argument("--min_val", type=float, help="Minimum value for generated data.")
