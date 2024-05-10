@@ -17,7 +17,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     text_inputs = ["$$" + str(number.item()) + "&&" for number in inputs]  # Create mixed input format if needed
     # Convert text data into tokenized format if the forward method uses tokenized inputs directly
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
-    targets = inputs.to(device)  # Dummy targets for example
+    targets = inputs.to(device)
     return tensor_inputs, targets  # Return formatted as needed by the model's forward method
 
 
@@ -33,7 +33,7 @@ def alignmentmixed(llm, config, num_epochs, model_path_load, model_path_save, sh
             llm.load_state_dict(torch.load(model_path_load))
             print("Successfully loaded model from:", model_path_load)
         except FileNotFoundError:
-            print("No model found at:", model_path_net_path_load)
+            print("No model found at:", model_path_load)
 
     llm.train()
 

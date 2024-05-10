@@ -16,7 +16,7 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
     text_inputs = ["$$" + str(number.item()) + "&&" for number in inputs]
     tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
-    targets = inputs.to(device)  # Dummy targets for example
+    targets = inputs.to(device)
     return tensor_inputs, targets
 
 def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl):
