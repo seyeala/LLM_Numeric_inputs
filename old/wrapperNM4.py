@@ -58,7 +58,7 @@ class NumericLMWrapper(nn.Module):
                 last_hidden_state = outputs.hidden_states[-1].to(self.device)  # Move hidden states to the correct device
                 projected_output = self.output_projection(last_hidden_state[:, -1, :].to(self.device))
                 return projected_output
-        else:
+        elif not self.project_input and not self.mixed_input:
             inputs = {key: value.to(self.device) if isinstance(value, torch.Tensor) else value for key, value in inputs.items()}
             outputs = self.model(**inputs, return_dict=True)
             if self.project_output and 'hidden_states' in outputs:
