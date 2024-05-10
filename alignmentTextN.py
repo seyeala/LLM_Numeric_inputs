@@ -121,7 +121,7 @@ if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, device=device)
     llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
-    llm.mixed_input=True
+    llm.mixed_input=False
 
     # Ensure the tokenizer has a pad token set
     if llm.tokenizer.pad_token is None:
