@@ -59,29 +59,34 @@ class NumericLMWrapper(nn.Module):
 
     def forward(self, inputs):
         # If mixed input is enabled, process the mixed data
-        if self.mixed_input:
+         if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
             tokenized_inputs = self.tokenizer(text_inputs, return_tensors="pt", padding=True, truncation=True)
             input_ids = tokenized_inputs['input_ids'].to(self.device)
             attention_mask = tokenized_inputs['attention_mask'].to(self.device)
 
-            # Prepare numeric embeddings if they exist
+            # Prepare embeddings for numeric inputs if they are provided
             if 'numeric_inputs' in inputs:
                 numeric_inputs = inputs['numeric_inputs'].to(self.device)
-                numeric_embeds = self.input_projection(numeric_inputs)
-                text_embeds = self.model.transformer.wte(input_ids)
-                combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=1)
+                numeric_embeds = self.input_projection(numeric_inputs)  # (batch_size, embedding_dim)
+
+                # Adjust dimensions: unsqueeze and repeat
+                numeric_embeds = numeric_embeds.unsqueeze(1)  # Add sequence length dimension
+                sequence_length = input_ids.size(1)  # Get sequence length from input_ids
+                numeric_embeds = numeric_embeds.expand(-1, sequence_length, -1)  # Repeat along the new sequence length dimension
+
+                text_embeds = self.model.transformer.wte(input_ids)  # (batch_size, sequence_length, embedding_dim)
+                combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=1)  # Concatenate along the sequence length dimension
                 outputs = self.model(inputs_embeds=combined_embeds, attention_mask=attention_mask, return_dict=True)
             else:
                 outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, return_dict=True)
 
-            # Handle projection output
             if self.project_output and 'hidden_states' in outputs:
                 last_hidden_state = outputs.hidden_states[-1]
                 projected_output = self.output_projection(last_hidden_state[:, -1, :])
                 return projected_output
 
-            return outputs.logits if hasattr(outputs, 'logits') else outputs
+        return outputs.logits if hasattr(outputs, 'logits') else outputs
 
         # If project input is enabled (but not mixed input)
         elif self.project_input:
