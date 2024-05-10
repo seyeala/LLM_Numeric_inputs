@@ -15,12 +15,21 @@ def generate_data(batch_size, min_val, max_val, device):
     return inputs, targets
 
 clear_cuda_memory()
-def alignment(llm, config, num_epochs, min_val, max_val, model_path_save, shl):
+def alignment(llm, config, num_epochs, min_val, max_val,model_path_load, model_path_save, shl):
     llm.train()
     device = next(llm.parameters()).device
     optimizer = Adam(llm.parameters(), lr=config['lr'])
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
     scaler = GradScaler()
+
+    if model_path_load:
+        try:
+            print(model_path_load)
+            model_state_dict = torch.load(model_path_load)
+            llm.load_state_dict(model_state_dict)
+            print(f"Loaded model from {model_path_load}")
+        except FileNotFoundError:
+            print(f"No model found at {model_path_load}, starting from scratch.")
 
     for epoch in range(num_epochs):
         total_cpu_start = time.time()
@@ -65,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_val", type=float, help="Minimum value for generated data.")
     parser.add_argument("--max_val", type=float, help="Maximum value for generated data.")
     parser.add_argument("--model_name", type=str, help="Model name for loading.")
+    parser.add_argument("--model_path_load", type=str, help="Path to save the trained model.")
     parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
     parser.add_argument("--model_path_save", type=str, help="Path to save the trained model.")
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
@@ -87,4 +97,4 @@ if __name__ == "__main__":
     numeric_lm = NumericLMWrapper(config['model_name'], project_input=True, project_output=True, device=device)
     numeric_lm.configure_trainable_layers(train_input_projection=True, train_output_projection=True, train_transformer=False)
 
-    alignment(numeric_lm, config, config['num_epochs'], config['min_val'], config['max_val'], config['model_path_save'], config['shl'])
+    alignment(numeric_lm, config, config['num_epochs'], config['min_val'], config['max_val'], config['model_path_save'] , config['model_path_save'], config['shl'])

@@ -15,21 +15,21 @@ def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
     targets = torch.rand(batch_size, 1).to(device)  # Dummy targets for example
     return tensor_inputs, targets
 
-def alignmenttext(llm, config, num_epochs, load_model_path, model_path_save, shl):
+def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl):
     device = next(llm.parameters()).device
     optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
     scaler = GradScaler()
 
     # Load model state if exists
-    if load_model_path:
+    if model_path_load:
         try:
-            print(load_model_path)
-            model_state_dict = torch.load(load_model_path)
+            print(model_path_load)
+            model_state_dict = torch.load(model_path_load)
             llm.load_state_dict(model_state_dict)
-            print(f"Loaded model from {load_model_path}")
+            print(f"Loaded model from {model_path_load}")
         except FileNotFoundError:
-            print(f"No model found at {load_model_path}, starting from scratch.")
+            print(f"No model found at {model_path_load}, starting from scratch.")
 
     llm.train()
 
@@ -127,4 +127,4 @@ if __name__ == "__main__":
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_save, config['shl'])
+    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_load, config['shl'])
