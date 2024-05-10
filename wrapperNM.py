@@ -59,11 +59,6 @@ class NumericLMWrapper(nn.Module):
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
-    # Additional methods remain unchanged
-
-            return projected_output
-
-        return outputs.logits if hasattr(outputs, 'logits') else outputs
 
 
     def generate_text(self, input_text, **generate_kwargs):
