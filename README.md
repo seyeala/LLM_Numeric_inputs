@@ -38,7 +38,7 @@ python alignmentNN.py --config './config/config.yaml' --num_epochs 2 --model_pat
 
 The second stage of  the projectors and diffison layers icnludes the input of strings of the numeric input with special tokens an the numeric output. In this stage only the linnear arrays (and not the tranformer) is further trained. Here the weight can be loaded from the prvious checkpoint and the outputs can be saved in anothe checkpoint.
 
-python alignmentNN.py --config './config/config.yaml' --num_epochs 2 --model_path_load ./chk/selfalignedNN.path --model_path_save ./chk/selfalignedTextN.path
+python alignmentTextN.py --config './config/config.yaml' --num_epochs 2 --model_path_load ./chk/selfalignedNN.path --model_path_save ./chk/selfalignedTextN.path
 
 To alig text to number execude the following ()
 python alignmentTextN.py --config './config/config.yaml' --num_epochs 100
