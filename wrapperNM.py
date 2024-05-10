@@ -65,7 +65,7 @@ class NumericLMWrapper(nn.Module):
             attention_mask = tokenized_inputs['attention_mask'].to(self.device)
 
             if 'numeric_inputs' in inputs:
-                numeric_inputs = inputs['numeric_inputs'].to(self device)
+                numeric_inputs = inputs['numeric_inputs'].to(self.device)
                 numeric_embeds = self.input_projection(numeric_inputs)  # Shape: (batch_size, embedding_dim)
                 numeric_embeds = numeric_embeds.unsqueeze(1)  # Shape: (batch_size, 1, embedding_dim)
 
