@@ -56,7 +56,6 @@ class NumericLMWrapper(nn.Module):
 
         self.input_projection = nn.Linear(1, embedding_dim).to(self.device)
         self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
-
     def forward(self, inputs):
         if self.mixed_input:
             text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
@@ -64,18 +63,25 @@ class NumericLMWrapper(nn.Module):
             input_ids = tokenized_inputs['input_ids'].to(self.device)
             attention_mask = tokenized_inputs['attention_mask'].to(self.device)
 
-            # Prepare embeddings for numeric inputs if they are provided
+            # Prepare numeric embeddings if they exist
             if 'numeric_inputs' in inputs:
                 numeric_inputs = inputs['numeric_inputs'].to(self.device)
-                numeric_embeds = self.input_projection(numeric_inputs)  # (batch_size, embedding_dim)
+                numeric_embeds = self.input_projection(numeric_inputs)  # Shape: (batch_size, embedding_dim)
 
-                # Adjust dimensions: unsqueeze and repeat
-                numeric_embeds = numeric_embeds.unsqueeze(1)  # Add sequence length dimension
-                sequence_length = input_ids.size(1)  # Get sequence length from input_ids
-                numeric_embeds = numeric_embeds.expand(-1, sequence_length, -1)  # Repeat along the new sequence length dimension
+                # Add sequence length dimension to numeric embeddings
+                numeric_embeds = numeric_embeds.unsqueeze(1)  # Shape: (batch_size, 1, embedding_dim)
 
-                text_embeds = self.model.transformer.wte(input_ids)  # (batch_size, sequence_length, embedding_dim)
-                combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=1)  # Concatenate along the sequence length dimension
+                # Repeat the numeric embeddings across the sequence length of the text embeddings
+                sequence_length = input_ids.size(1)  # Get the sequence length from input_ids
+                numeric_embeds = numeric_embeds.expand(-1, sequence_length, -1)  # Shape: (batch_size, sequence_length, embedding_dim)
+
+                # Get text embeddings
+                text_embeds = self.model.transformer.wte(input_ids)  # Shape: (batch_size, sequence_length, embedding_dim)
+
+                # Concatenate numeric and text embeddings along the sequence length dimension
+                combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=2)  # Concatenate along the embedding dimension
+
+                # Pass the combined embeddings to the model
                 outputs = self.model(inputs_embeds=combined_embeds, attention_mask=attention_mask, return_dict=True)
             else:
                 outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, return_dict=True)
@@ -111,7 +117,6 @@ class NumericLMWrapper(nn.Module):
                 return projected_output
 
             return outputs.logits if hasattr(outputs, 'logits') else outputs
-
 
 
 
