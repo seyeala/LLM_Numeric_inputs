@@ -69,7 +69,6 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
 
 
 
-if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the model with text inputs.")
     parser.add_argument("--num_epochs", type=int, help="Number of epochs to train.")
     parser.add_argument("--min_val", type=float, help="Minimum value for generated data.")
@@ -80,10 +79,44 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
     parser.add_argument("--savestage2", help="Path to save the trained model.", default="./chk/atrained_numeric_lm_stage2.pth")
 
+    # Parse arguments from command line
     args = parser.parse_args()
 
-    with open(args.config, 'r') as file:
-        config = yaml.safe_load(file)
+    # Load configuration from YAML file
+    if args.config:
+        with open(args.config, 'r') as file:
+            config = yaml.safe_load(file)
+    else:
+        config = {}
+
+    # Apply default values first
+    num_epochs = config.get('num_epochs', 2)  # Default value
+    min_val = config.get('min_val', 0.0)  # Default value
+    max_val = config.get('max_val', 100.0)  # Default value
+    model_name = config.get('model_name', 'openai-community/gpt2-large')  # Default value
+    shl = config.get('shl', False)  # Default value
+    model_path = config.get('model_path', './chk/trained_numeric_lm.pth')  # Default value
+    savestage2 = config.get('savestage2', './chk/atrained_numeric_lm_stage2.pth')  # Default value
+
+    # Override with command line arguments if provided
+    if args.num_epochs is not None:
+        num_epochs = args.num_epochs
+    if args.min_val is not None:
+        min_val = args.min_val
+    if args.max_val is not None:
+        max_val = args.max_val
+    if args.model_name is not None:
+        model_name = args.model_name
+    if args.shl is not None:
+        shl = args.shl
+    if args.model_path is not None:
+        model_path = args.model_path
+    if args.savestage2 is not None:
+        savestage2 = args.savestage2
+
+    # Training function or whatever you need to do
+    print(f"Training with config: epochs={num_epochs}, min_val={min_val}, max_val={max_val}, model={model_name}, scheduler={shl}")
+    print(f"Model will be saved to {model_path} and {savestage2}")
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, device=device)

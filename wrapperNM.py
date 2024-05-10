@@ -35,32 +35,36 @@ class NumericLMWrapper(nn.Module):
         if self.project_output:
             self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
 
-    def forward(self, **inputs):
-        if self.mixed_input:
-            # Assuming inputs['input_text'] contains the mixed text
-            text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
-            numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
-            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
-            text_embeds = self.model.transformer.wte(input_ids)
-            combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1).to(self.device)
-            outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
-        elif self.project_input and not self.mixed_input:
-            # If inputs is expected to be a numeric tensor directly
-            numeric_inputs = inputs['numeric_inputs'].to(self.device)  # Ensure this is named appropriately depending on how inputs are passed
-            embedded_input = self.input_projection(numeric_inputs)
-            sequence_length = self.model.config.n_positions
-            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1).to(self.device)
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(numeric_inputs.size(0), 1).to(self.device)
-            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
-        else:
-            # Normalize inputs for tensor input handling for standard text input scenarios
+    def forward(self, inputs):
+        if isinstance(inputs, dict):  # Handles text inputs
             inputs = {key: value.to(self.device) for key, value in inputs.items()}
             outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
+        else:  # Handles numeric inputs
+            if self.mixed_input:
+                # Assuming inputs['input_text'] contains the mixed text
+                text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
+                numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
+                input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
+                text_embeds = self.model.transformer.wte(input_ids)
+                combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1).to(self.device)
+                outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
+            elif self.project_input and not self.mixed_input:
+                # If inputs is expected to be a numeric tensor directly
+                numeric_inputs = inputs['numeric_inputs'].to(self.device)  # Ensure this is named appropriately depending on how inputs are passed
+                embedded_input = self.input_projection(numeric_inputs)
+                sequence_length = self.model.config.n_positions
+                inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1).to(self.device)
+                position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(numeric_inputs.size(0), 1).to(self.device)
+                outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
+            else:
+                # Normalize inputs for tensor input handling for standard text input scenarios
+                inputs = {key: value.to(self.device) for key, value in inputs.items()}
+                outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
 
-        if self.project_output and 'hidden_states' in outputs:
-            last_hidden_state = outputs.hidden_states[-1]
-            projected_output = self.output_projection(last_hidden_state[:, -1, :])
-            return projected_output
+            if self.project_output and 'hidden_states' in outputs:
+                last_hidden_state = outputs.hidden_states[-1]
+                projected_output = self.output_projection(last_hidden_state[:, -1, :])
+                return projected_output
 
         return outputs.logits if hasattr(outputs, 'logits') else outputs
 
