@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.cuda.amp import autocast, GradScaler
 from torch.optim import Adam, lr_scheduler
-from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory
+from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory,load_specific_weights
 import time
 import argparse
 import yaml
@@ -24,12 +24,14 @@ def alignment(llm, config, num_epochs, min_val, max_val,model_path_load, model_p
 
     if model_path_load:
         try:
-            print(model_path_load)
-            model_state_dict = torch.load(model_path_load)
-            llm.load_state_dict(model_state_dict)
-            print(f"Loaded model from {model_path_load}")
+            print(f"Attempting to load model from {model_path_load}")
+            load_specific_weights(llm, model_path_load)
+            print(f"Successfully loaded model from {model_path_load}")
         except FileNotFoundError:
             print(f"No model found at {model_path_load}, starting from scratch.")
+        except RuntimeError as e:
+            print(f"Failed to load model. Error: {e}")
+            print(f"Check if the model architecture during saving matches the one during loading.")
 
     for epoch in range(num_epochs):
         total_cpu_start = time.time()
