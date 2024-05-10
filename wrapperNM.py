@@ -36,29 +36,41 @@ class NumericLMWrapper(nn.Module):
             self.output_projection = nn.Linear(embedding_dim, 1).to(self.device)
 
     def forward(self, inputs):
-        if self.mixed_input:
-            text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
-            numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
-            input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
-            text_embeds = self.model.transformer.wte(input_ids)
-            combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1).to(self.device)
-            outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
-        elif self.project_input and not self.mixed_input:
-            embedded_input = self.input_projection(inputs.to(self.device))  # Ensure input tensor is on the correct device
-            sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
-            inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1).to(self.device)
-            position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(self.device)
-            outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
+        if isinstance(inputs, dict):
+            # Ensuring that all tensors are moved to the correct device
+            inputs = {key: value.to(self.device) if isinstance(value, torch.Tensor) else value for key, value in inputs.items()}
+            outputs = self.model(**inputs, return_dict=True)
+
+            if self.project_output and 'hidden_states' in outputs:
+                last_hidden_state = outputs.hidden_states[-1]
+                projected_output = self.output_projection(last_hidden_state[:, -1, :])
+                return projected_output
+
+            return outputs.logits if hasattr(outputs, 'logits') else outputs
         else:
-            inputs = {key: value.to(self.device) for key, value in inputs.items()}  # Move all input dictionary tensors to the device
-            outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
+            if self.mixed_input:
+                text_inputs, numeric_inputs = self._process_mixed_input(inputs['input_text'])
+                numeric_embeds = self.input_projection(numeric_inputs.to(self.device))
+                input_ids = self.tokenizer(text_inputs, return_tensors="pt")['input_ids'].to(self.device)
+                text_embeds = self.model.transformer.wte(input_ids)
+                combined_embeds = torch.cat([numeric_embeds.unsqueeze(0), text_embeds], dim=1).to(self.device)
+                outputs = self.model(inputs_embeds=combined_embeds, return_dict=True)
+            elif self.project_input and not self.mixed_input:
+                embedded_input = self.input_projection(inputs.to(self.device))  # Ensure input tensor is on the correct device
+                sequence_length = self.model.config.n_positions  # Use the maximum sequence length of the model
+                inputs_embeds = embedded_input.unsqueeze(1).expand(-1, sequence_length, -1).to(self.device)
+                position_ids = torch.arange(0, sequence_length).unsqueeze(0).repeat(inputs.size(0), 1).to(self.device)
+                outputs = self.model(inputs_embeds=inputs_embeds, position_ids=position_ids, return_dict=True, output_hidden_states=True)
+            else:
+                inputs = {key: value.to(self.device) for key, value in inputs.items()}  # Move all input dictionary tensors to the device
+                outputs = self.model(**inputs, return_dict=True, output_hidden_states=True)
 
-        if self.project_output and 'hidden_states' in outputs:
-            last_hidden_state = outputs.hidden_states[-1].to(self.device)  # Move hidden states to the correct device
-            projected_output = self.output_projection(last_hidden_state[:, -1, :].to(self.device))
-            return projected_output
+            if self.project_output and 'hidden_states' in outputs:
+                last_hidden_state = outputs.hidden_states[-1].to(self.device)  # Move hidden states to the correct device
+                projected_output = self.output_projection(last_hidden_state[:, -1, :].to(self.device))
+                return projected_output
 
-        return outputs.logits if hasattr(outputs, 'logits') else outputs
+            return outputs.logits if hasattr(outputs, 'logits') else outputs
 
 
     def generate_text(self, input_text, **generate_kwargs):

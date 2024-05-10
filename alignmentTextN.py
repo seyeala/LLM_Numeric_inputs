@@ -46,7 +46,7 @@ def alignmenttext(llm, config, num_epochs, load_model_path, save_model_path, shl
 
             optimizer.zero_grad()
             with autocast():
-                outputs = llm(**batch_inputs)  # Directly access the tensor output
+                outputs = llm(batch_inputs)  # Directly access the tensor output
                 loss = nn.MSELoss()(outputs, batch_targets)
                 epoch_loss_sum += loss.item()
 
