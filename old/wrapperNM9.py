@@ -122,26 +122,12 @@ class NumericLMWrapper(nn.Module):
         else:
             raise NotImplementedError("Generate method is not implemented for projected input/output.")
 
-    def _process_mixed_input(self, text_inputs):
-        numeric_values = []
-        processed_texts = []
-
-        for text_input in text_inputs:
-            found_numbers = re.findall(r'\$\$(.*?)\&\&', text_input)
-            found_numbers = [float(num) for num in found_numbers]
-            numeric_values.extend(founds_numbers)
-
-            # Remove the numeric placeholders after extracting values
-            processed_text = re.sub(r'\$\$.*?\&\&', '', text_input)
-            processed_texts.append(processed_text)
-
+    def _process_mixed_input(self, input_text):
+        numeric_values = re.findall(r'\$\$(.*?)\&\&', input_text)
+        numeric_values = [float(numeric) for numeric in numeric_values]
+        processed_text = re.sub(r'\$\$.*?\&\&', '', input_text)
         numeric_inputs = torch.tensor(numeric_values, dtype=torch.float).view(-1, 1).to(self.device)
-
-        # Join the processed texts if necessary or handle them as a batch if your model requires that
-        processed_text = ' '.join(processed_texts)
-
         return processed_text, numeric_inputs
-
 
     def configure_trainable_layers(self, train_input_projection=True, train_output_projection=True, train_transformer=True):
         """
