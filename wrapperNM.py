@@ -69,7 +69,7 @@ class NumericLMWrapper(nn.Module):
 
                 # Get sequence length from text embeddings and repeat numeric embeddings across it
                 sequence_length = input_ids.size(1)
-                numeric_embeds = numeric_embeds.expand(-1, sequence_arrayngth, -1)  # Now (batch_size, sequence_length, embedding_dim)
+                numeric_embeds = numeric_embeds.expand(-1, sequence_length, -1)  # Now (batch_size, sequence_length, embedding_dim)
 
                 text_embeds = self.model.transformer.wte(input_ids)  # (batch_size, sequence_length, embedding_dim)
                 combined_embeds = torch.cat([numeric_embeds, text_embeds], dim=2)  # Concatenate along the embedding dimension
