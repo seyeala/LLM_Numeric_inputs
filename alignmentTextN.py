@@ -86,23 +86,20 @@ if __name__ == "__main__":
     parser.add_argument("--model_path_save", help="Path to save the trained model.", default="./chk/atrained_numeric_lm_stage2.pth")
 
     # Parse arguments from command line
+
     args = parser.parse_args()
 
     # Load configuration from YAML file
-    if args.config:
-        with open(args.config, 'r') as file:
-            config = yaml.safe_load(file)
-    else:
-        config = {}
+    with open(args.config, 'r') as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
 
-    # Apply default values first
-    num_epochs = config.get('num_epochs', 2)  # Default value
-    min_val = config.get('min_val', 0.0)  # Default value
-    max_val = config.get('max_val', 100.0)  # Default value
-    model_name = config.get('model_name', 'openai-community/gpt2-large')  # Default value
-    shl = config.get('shl', False)  # Default value
-    #model_path_load = config.get('model_path_load', './chk/trained_numeric_lm.pth')  # Default value
-    #model_path_save = config.get('model_path_save', './chk/atrained_numeric_lm_stage2.pth')  # Default value
+    # Override YAML settings with command-line arguments (if specified)
+    config['num_epochs'] = args.num_epochs if args.num_epochs is not None else config.get('num_epochs', 2)
+    config['min_val'] = args.min_val if args.min_val is not None else config.get('min_val', 0)
+    config['max_val'] = args.max_val if args.max_val is not None else config.get('max_val', 100)
+    config['model_name'] = args.model_name if args.model_name is not None else config.get('model_name', 'openai-community/gpt2-large')
+    config['shl'] = args.shl if args.shl is not None else config.get('shl', False)
+    config['model_path_save'] = args.model_path_save if args.model_path_save is not None else config.get('model_path', './chk/trained_numeric_lm.pth')
 
     # Override with command line arguments if provided
     if args.num_epochs is not None:
