@@ -101,21 +101,6 @@ if __name__ == "__main__":
     config['shl'] = args.shl if args.shl is not None else config.get('shl', False)
     config['model_path_save'] = args.model_path_save if args.model_path_save is not None else config.get('model_path', './chk/trained_numeric_lm.pth')
 
-    # Override with command line arguments if provided
-    if args.num_epochs is not None:
-        num_epochs = args.num_epochs
-    if args.min_val is not None:
-        min_val = args.min_val
-    if args.max_val is not None:
-        max_val = args.max_val
-    if args.model_name is not None:
-        model_name = args.model_name
-    if args.shl is not None:
-        shl = args.shl
-    if args.model_path_load is not None:
-        model_path_load = args.model_path_load
-    if args.model_path_save is not None:
-        model_path_save = args.model_path_save
 
     # Training function or whatever you need to do
     print(f"Training with config: epochs={num_epochs}, min_val={min_val}, max_val={max_val}, model={model_name}, scheduler={shl}")
