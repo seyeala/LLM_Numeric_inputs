@@ -95,8 +95,8 @@ if __name__ == "__main__":
     max_val = config.get('max_val', 100.0)  # Default value
     model_name = config.get('model_name', 'openai-community/gpt2-large')  # Default value
     shl = config.get('shl', False)  # Default value
-    model_path_load = config.get('model_path_load', './chk/trained_numeric_lm.pth')  # Default value
-    model_path_save = config.get('model_path_save', './chk/atrained_numeric_lm_stage2.pth')  # Default value
+    #model_path_load = config.get('model_path_load', './chk/trained_numeric_lm.pth')  # Default value
+    #model_path_save = config.get('model_path_save', './chk/atrained_numeric_lm_stage2.pth')  # Default value
 
     # Override with command line arguments if provided
     if args.num_epochs is not None:
@@ -127,4 +127,4 @@ if __name__ == "__main__":
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_load, config['shl'])
+    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_save, config['shl'])

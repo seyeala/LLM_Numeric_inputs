@@ -26,20 +26,19 @@ git clone 'https://github.com/seyeala/LLM_Numeric_inputs.git'
 
 Install required packages:
 
+cd LLM_Numeric_inputs
 pip install -r requirements.txt
 
 
 To train the model with default settings defined in the /config/config.yaml file.
 
-The first step is called self alignment of the projectors used in customized tokenizers:
+The first self alignment of  the projectors and diffison layers when the input and output are the same numeric value you can run. In this stage only the linnear arrays (and not the tranformer) is trained
 
+python alignmentNN.py --config './config/config.yaml' --num_epochs 2 --model_path_save ./chk/selfalignedNN.path
 
-python alignmentNN.py --config './config/config.yaml'
+The second stage of  the projectors and diffison layers icnludes the input of strings of the numeric input with special tokens an the numeric output. In this stage only the linnear arrays (and not the tranformer) is further trained. Here the weight can be loaded from the prvious checkpoint and the outputs can be saved in anothe checkpoint.
 
-To override settings via command line, for example, changing the number of epochs.
-
-To align Number to Number (train the projectors) do the following command
-python alignmentNN.py --config './config/config.yaml' --num_epochs 2
+python alignmentNN.py --config './config/config.yaml' --num_epochs 2 --model_path_load ./chk/selfalignedNN.path --model_path_save ./chk/selfalignedTextN.path
 
 To alig text to number execude the following ()
 python alignmentTextN.py --config './config/config.yaml' --num_epochs 100
