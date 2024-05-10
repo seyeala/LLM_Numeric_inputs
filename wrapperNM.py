@@ -8,6 +8,14 @@ def clear_cuda_memory():
     torch.cuda.empty_cache()
     print("Cleared CUDA memory cache.")
 
+
+
+def print_cuda_memory():
+    """Prints the current and maximum memory used on CUDA."""
+    print(f'Current memory allocated: {torch.cuda.memory_allocated() / 1e6} MB')
+    print(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1e6} MB')
+    torch.cuda.reset_peak_memory_stats()
+
 class NumericLMWrapper(nn.Module):
     def __init__(self, model_name, project_input=False, project_output=False, mixed_input=False, device='cpu'):
         super(NumericLMWrapper, self).__init__()
