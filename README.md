@@ -81,3 +81,25 @@ We noted that lscheduled learning rate starting from 0.003 and reducing by facto
 5-Conclusion
 
 We note that the modular code was successfully tested on several transformers (GPT-2 and GPT-large). This modular approach allows us to conveniently scale up this test on larger networks. Additionally, we noticed promising results for the alignment of linear arrays on the LLM (2% error on numerical alignment). This indicates that using this approach on more resource-intensive datasets (Text to Text as well as Text/Number to Number) would require minimal changes to the LLM weights. While we are unsure about the ultimate success of this approach, the current findings so far strengthen our hypothesis that deep integration of numerical data in LLMs can be done efficiently for a new class of tasks, such as medical diagnosis or financial analysis, that involve unstructured number/text information.
+
+
+## CP1 Stabilization status
+
+Current stabilization work is documented in `docs/CP1_STABILIZATION.md`.
+
+CP1 focuses on making the repository safer to run from a clean checkout. It fixes repository hygiene, configuration validity, checkpoint path handling, CPU-safe CUDA utility behavior, and CLI overrides for the main training scripts.
+
+The validated CP1 syntax check is:
+
+```powershell
+python -m py_compile wrapperNM.py alignmentNN.py alignmentTextN.py alignmentMixedN.py dataset\text_numeric_generator_for_llm.py
+```
+
+After installing compatible runtime dependencies, use these smoke-test commands:
+
+```powershell
+python alignmentNN.py --config .\config\config.yaml --num_epochs 1 --num_batches 1 --batch_size 1 --model_path_load "" --model_path_save .\chk\smoke_nn.pth
+python alignmentTextN.py --config .\config\config.yaml --num_epochs 1 --num_batches 1 --batch_size 1 --model_path_load .\chk\smoke_nn.pth --model_path_save .\chk\smoke_textn.pth
+```
+
+Mixed text-plus-numeric training remains experimental after CP1. The CP1 changes improve its CLI and checkpoint handling, but do not validate the mixed-mode architecture.
