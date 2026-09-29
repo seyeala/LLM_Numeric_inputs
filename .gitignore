@@ -4,7 +4,7 @@ __pycache__/
 *.pth
 *.path
 chk/
-checkpoints/
+/checkpoints/
 wandb/
 .pytest_cache/
 .ipynb_checkpoints/

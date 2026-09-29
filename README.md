@@ -103,3 +103,12 @@ python alignmentTextN.py --config .\config\config.yaml --num_epochs 1 --num_batc
 ```
 
 Mixed text-plus-numeric training remains experimental after CP1. The CP1 changes improve its CLI and checkpoint handling, but do not validate the mixed-mode architecture.
+
+## Completion audit and roadmap
+
+A full local repository audit was completed after CP1.
+
+- Audit findings: `docs/AUDIT_2026-09-29.md`
+- Ten-checkpoint completion roadmap: `docs/ROADMAP_CP2_CP11.md`
+
+The roadmap defines CP2 through CP11. CP1 is considered syntax/configuration stabilization only; runtime model validation begins after the reproducible environment and automated-test checkpoints are complete.

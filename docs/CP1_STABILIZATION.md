@@ -6,10 +6,12 @@ CP1 makes the repository runnable from a cleaner checkout for the validated firs
 
 CP1 covers repository hygiene, configuration correctness, CLI consistency, checkpoint path handling, and import-time/runtime stability on CPU or CUDA hosts.
 
-Validated target workflows:
+Intended target workflows:
 
 1. Numeric-to-numeric projection alignment through `alignmentNN.py`.
 2. Text-to-numeric projection alignment through `alignmentTextN.py`.
+
+CP1 validates syntax/configuration behavior only; runtime training validation is scheduled for later checkpoints.
 
 Explicitly out of scope:
 
