@@ -1,4 +1,9 @@
 .DS_Store
+.venv/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
 __pycache__/
 *.py[cod]
 *.pth

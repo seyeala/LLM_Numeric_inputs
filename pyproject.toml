@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-numeric-inputs"
+version = "0.2.0.dev0"
+description = "Numeric projection experiments for causal language models"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "numpy==2.5.3",
+  "PyYAML==6.0.3",
+  "torch==2.14.0",
+  "transformers==5.17.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1", "ruff==0.16.9"]
+
+[tool.setuptools]
+py-modules = ["wrapperNM"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+exclude = ["dataset/text_numeric_generator_for_LLM.ipynb"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -112,3 +112,34 @@ A full local repository audit was completed after CP1.
 - Ten-checkpoint completion roadmap: `docs/ROADMAP_CP2_CP11.md`
 
 The roadmap defines CP2 through CP11. CP1 is considered syntax/configuration stabilization only; runtime model validation begins after the reproducible environment and automated-test checkpoints are complete.
+
+## CP2 reproducible environment
+
+The supported development/runtime baseline is Python 3.12.
+
+On Windows, create the local environment and install the CPU-capable dependency baseline with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1
+```
+
+On the RTX 3090 workstation, enable the tested CUDA 12.6 PyTorch build with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1 -Gpu
+```
+
+The environment is created at `.venv` and is intentionally not committed.
+
+Direct dependencies are in `requirements.txt`; development tools are in
+`requirements-dev.txt`; the workstation CUDA override is in
+`requirements-gpu-cu126.txt`. The original broad environment dump is
+preserved as `requirements-legacy.txt` for historical reference only.
+
+To inspect the active environment:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\environment_report.py
+```
+
+CP2 evidence is recorded in `docs/checkpoints/CP02_ENVIRONMENT.md`.

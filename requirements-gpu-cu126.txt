@@ -1,0 +1,3 @@
+# Install after requirements-dev.txt to enable CUDA on the RTX 3090 workstation.
+--index-url https://download.pytorch.org/whl/cu126
+torch==2.14.0+cu126

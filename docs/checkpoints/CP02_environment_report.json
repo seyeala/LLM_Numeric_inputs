@@ -1,0 +1,40 @@
+{
+  "python": "3.12.10",
+  "python_executable": "F:\\LLM_Numeric_inputs\\.venv\\Scripts\\python.exe",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "packages": {
+    "torch": "2.14.0+cu126",
+    "transformers": "5.17.0",
+    "numpy": "2.5.3",
+    "PyYAML": "6.0.3",
+    "pytest": "9.1.1",
+    "ruff": "0.16.9"
+  },
+  "torch_runtime": {
+    "version": "2.14.0+cu126",
+    "cuda_build": "12.6",
+    "cuda_available": true,
+    "cuda_device_count": 2,
+    "devices": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3090",
+        "capability": [
+          8,
+          6
+        ]
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA GeForce RTX 3090",
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  },
+  "nvidia_smi": "0, NVIDIA GeForce RTX 3090, 591.86, 24576 MiB\n1, NVIDIA GeForce RTX 3090, 591.86, 24576 MiB",
+  "git_sha": "d69c38e8b8e6ab626e61503e1cd7bbd54af2e2b5",
+  "git_status_porcelain": "M .gitignore\n M README.md\nR  requirements.txt -> requirements-legacy.txt\n?? docs/checkpoints/CP02_ENVIRONMENT.md\n?? docs/checkpoints/CP02_environment_report.json\n?? pyproject.toml\n?? requirements-dev.txt\n?? requirements-gpu-cu126.txt\n?? requirements-lock-cu126.txt\n?? requirements.txt\n?? scripts/"
+}

@@ -1,4 +1,4 @@
-# Completion Roadmap — CP2 through CP11
+﻿# Completion Roadmap â€” CP2 through CP11
 
 This roadmap defines the ten remaining checkpoints required to turn `LLM_Numeric_inputs` from an experimental prototype into a reproducible, tested research repository.
 
@@ -42,7 +42,7 @@ Each checkpoint should land as a separate commit or small commit series and must
 
 ---
 
-## CP2 — Reproducible environment and dependency baseline
+## CP2 â€” Reproducible environment and dependency baseline
 
 #
 
@@ -81,7 +81,7 @@ Record the successful install commands, package versions, CUDA status, and the e
 
 ---
 
-## CP3 — Core library, configuration, and checkpoint contracts
+## CP3 â€” Core library, configuration, and checkpoint contracts
 
 #
 
@@ -122,7 +122,7 @@ Document the public API, tensor contracts, checkpoint format version, and legacy
 
 ---
 
-## CP4 — Automated offline test harness
+## CP4 â€” Automated offline test harness
 
 #
 
@@ -164,7 +164,7 @@ Store test inventory, commands, and results in `docs/checkpoints/CP04_TESTS.md`.
 
 ---
 
-## CP5 — Deterministic dataset pipeline
+## CP5 â€” Deterministic dataset pipeline
 
 #
 
@@ -179,7 +179,7 @@ Replace ad hoc generated files with a reproducible data-generation contract.
 - Refactor `text_numeric_generator_for_llm.py` into pure functions plus a guarded CLI.
 - Remove all dataset generation at import time.
 - Seed Python and NumPy RNGs from one explicit seed.
-- Add task-specific generation commands for N→N, text→N, and minimum-number data.
+- Add task-specific generation commands for Nâ†’N, textâ†’N, and minimum-number data.
 - Add explicit output directory handling.
 - Generate deterministic train/validation/test splits.
 - Add a manifest containing schema version, seed, counts, ranges, generator commit, and SHA-256 hashes.
@@ -207,7 +207,7 @@ Write generator commands, manifest examples, data schema, and migration notes in
 
 ---
 
-## CP6 — Numeric-to-numeric validated experiment
+## CP6 â€” Numeric-to-numeric validated experiment
 
 #
 
@@ -249,7 +249,7 @@ Store the canonical commands, metric definitions, seeded result table, and artif
 
 ---
 
-## CP7 — Text-to-numeric validated experiment
+## CP7 â€” Text-to-numeric validated experiment
 
 #
 
@@ -287,7 +287,7 @@ Document the experiment design, initialization comparison, robustness sets, and 
 
 ---
 
-## CP8 — Correct mixed text/numeric embedding architecture
+## CP8 â€” Correct mixed text/numeric embedding architecture
 
 #
 
@@ -339,7 +339,7 @@ Document the sequence construction algorithm and tests in `docs/checkpoints/CP08
 
 ---
 
-## CP9 — Minimum-number mixed-task experiment
+## CP9 â€” Minimum-number mixed-task experiment
 
 #
 
@@ -377,7 +377,7 @@ Write the protocol, baselines, split logic, seeded results, and failure analysis
 
 ---
 
-## CP10 — Reproducible benchmark and experiment system
+## CP10 â€” Reproducible benchmark and experiment system
 
 #
 
@@ -417,7 +417,7 @@ Store benchmark methodology, environment, canonical run IDs, result tables, and 
 
 ---
 
-## CP11 — CI, documentation, packaging, and release acceptance
+## CP11 â€” CI, documentation, packaging, and release acceptance
 
 #
 
@@ -437,7 +437,7 @@ Make the repository maintainable by someone other than the original experiment a
 - Add license/citation metadata if appropriate for the intended public use.
 - Add a reproducibility checklist and release checklist.
 - Remove or archive superseded scripts only after compatibility commands are documented.
-- Ensure all CP2–CP10 closure documents exist and agree with the code.
+- Ensure all CP2â€“CP10 closure documents exist and agree with the code.
 - Prepare a versioned release candidate locally; pushing/tagging remains an explicit repository-owner action.
 
 ### Final acceptance criteria
@@ -449,8 +449,8 @@ From a fresh clone:
 2. install the project
 3. run offline unit/smoke tests
 4. generate a small deterministic dataset
-5. run N→N smoke training/evaluation
-6. run text→N smoke training/evaluation
+5. run Nâ†’N smoke training/evaluation
+6. run textâ†’N smoke training/evaluation
 7. run mixed minimum-task smoke training/evaluation
 8. load each produced checkpoint and re-evaluate it
 9. generate a structured results summary
@@ -469,7 +469,7 @@ When those conditions are met, the repository can be called complete for its sta
 | CP | Name | Current status |
 | --- | --- | --- |
 | CP1 | Stabilization | Complete: syntax/config only |
-| CP2 | Environment/dependencies | Planned |
+| CP2 | Environment/dependencies | Complete: Python 3.12 + CUDA 12.6 env |
 | CP3 | Core contracts/checkpoints | Planned |
 | CP4 | Automated tests | Planned |
 | CP5 | Deterministic data | Planned |
