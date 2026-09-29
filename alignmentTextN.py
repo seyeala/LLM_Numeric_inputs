@@ -1,31 +1,77 @@
+import argparse
+import time
+from pathlib import Path
+
 import torch
 from torch import nn
-from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import GradScaler, autocast
 from torch.optim import Adam, lr_scheduler
-import time
-import argparse
 import yaml
-from wrapperNM import NumericLMWrapper, print_cuda_memory, clear_cuda_memory, load_specific_weights
+
+from wrapperNM import NumericLMWrapper, load_specific_weights, print_cuda_memory
 
 
+def str2bool(value):
+    if isinstance(value, bool):
+        return value
+    value = value.lower()
+    if value in {"true", "1", "yes", "y"}:
+        return True
+    if value in {"false", "0", "no", "n"}:
+        return False
+    raise argparse.ArgumentTypeError("Expected a boolean value.")
 
+
+def load_config(path):
+    with open(path, "r", encoding="utf-8") as file:
+        return yaml.safe_load(file) or {}
+
+
+def apply_overrides(config, args):
+    for key in ["num_epochs", "num_batches", "batch_size", "lr", "min_val", "max_val", "model_name", "device", "model_path_load", "model_path_save", "shl"]:
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+
+    config.setdefault("num_epochs", 2)
+    config.setdefault("num_batches", 10)
+    config.setdefault("batch_size", 8)
+    config.setdefault("lr", 0.003)
+    config.setdefault("min_val", 0.0)
+    config.setdefault("max_val", 100.0)
+    config.setdefault("model_name", "openai-community/gpt2")
+    config.setdefault("device", "auto")
+    config.setdefault("shl", False)
+    config.setdefault("model_path_load", None)
+    config.setdefault("model_path_save", "./chk/trained_numeric_lm_stage2.pth")
+    return config
+
+
+def resolve_device(requested):
+    if requested in (None, "", "auto"):
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(requested)
+
+
+def ensure_parent_dir(path):
+    Path(path).expanduser().parent.mkdir(parents=True, exist_ok=True)
 
 
 def generate_text_data(batch_size, min_val, max_val, device, tokenizer):
-    """Generates text data for inputs."""
+    """Generate text-wrapped numeric inputs and numeric targets."""
     inputs = torch.rand(batch_size, 1) * (max_val - min_val) + min_val
     text_inputs = ["$$" + str(number.item()) + "&&" for number in inputs]
-    tensor_inputs = tokenizer(text_inputs, return_tensors='pt', padding=True, truncation=True).to(device)
+    tensor_inputs = tokenizer(text_inputs, return_tensors="pt", padding=True, truncation=True).to(device)
     targets = inputs.to(device)
     return tensor_inputs, targets
 
+
 def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl):
     device = next(llm.parameters()).device
-    optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=config['lr'])
+    optimizer = Adam(filter(lambda p: p.requires_grad, llm.parameters()), lr=float(config["lr"]))
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1) if shl else None
-    scaler = GradScaler()
+    scaler = GradScaler(enabled=device.type == "cuda")
 
-    # Load model state if exists
     if model_path_load:
         try:
             print(f"Attempting to load model from {model_path_load}")
@@ -33,26 +79,33 @@ def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl
             print(f"Successfully loaded model from {model_path_load}")
         except FileNotFoundError:
             print(f"No model found at {model_path_load}, starting from scratch.")
-        except RuntimeError as e:
-            print(f"Failed to load model. Error: {e}")
-            print(f"Check if the model architecture during saving matches the one during loading.")
+        except RuntimeError as error:
+            print(f"Failed to load model. Error: {error}")
+            print("Check if the model architecture during saving matches the one during loading.")
 
     llm.train()
+    num_batches = int(config["num_batches"])
+    batch_size = int(config["batch_size"])
 
-    for epoch in range(num_epochs):
-        total_cpu_start = time.time()  # Start the timer for total CPU time this epoch
-        cumulative_data_cpu_time = 0  # Initialize cumulative CPU data loading time
-        epoch_loss_sum = 0  # Sum of losses for the epoch
+    for epoch in range(int(num_epochs)):
+        total_cpu_start = time.time()
+        cumulative_data_cpu_time = 0.0
+        epoch_loss_sum = 0.0
 
-        for i in range(config['num_batches']):
-            batch_cpu_start = time.time()  # Start the timer for one batch
-            batch_inputs, batch_targets = generate_text_data(config['batch_size'], config['min_val'], config['max_val'], device, llm.tokenizer)
-            batch_cpu_end = time.time()  # End the timer for one batch
-            cumulative_data_cpu_time += batch_cpu_end - batch_cpu_start  # Accumulate the CPU time
+        for _ in range(num_batches):
+            batch_cpu_start = time.time()
+            batch_inputs, batch_targets = generate_text_data(
+                batch_size,
+                config["min_val"],
+                config["max_val"],
+                device,
+                llm.tokenizer,
+            )
+            cumulative_data_cpu_time += time.time() - batch_cpu_start
 
-            optimizer.zero_grad()
-            with autocast():
-                outputs = llm(batch_inputs)  # Directly access the tensor output
+            optimizer.zero_grad(set_to_none=True)
+            with autocast(enabled=device.type == "cuda"):
+                outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
                 epoch_loss_sum += loss.item()
 
@@ -60,58 +113,55 @@ def alignmenttext(llm, config, num_epochs, model_path_load, model_path_save, shl
             scaler.step(optimizer)
             scaler.update()
 
-            #print(f'Batch {i + 1}: Loss = {loss.item():.4f}, Batch CPU Time = {batch_cpu_end - batch_cpu_start:.2f} seconds')
-
-        if shl and scheduler:
+        if scheduler:
             scheduler.step()
 
-        total_cpu_time = time.time() - total_cpu_start  # Total CPU time for the epoch
-        average_loss = epoch_loss_sum / config['num_batches']  # Average loss for the epoch
-        print(f'Epoch {epoch + 1}: Average Loss = {average_loss:.4f}, Total Compute Time = {total_cpu_time:.2f} seconds, Cumulative Data Loading CPU Time = {cumulative_data_cpu_time:.2f} seconds')
+        average_loss = epoch_loss_sum / num_batches
+        print(f"Epoch {epoch + 1}: Average Loss = {average_loss:.4f}, Total Compute Time = {time.time() - total_cpu_start:.2f} seconds, Cumulative Data Loading CPU Time = {cumulative_data_cpu_time:.2f} seconds")
         print_cuda_memory()
 
+    ensure_parent_dir(model_path_save)
     torch.save(llm.state_dict(), model_path_save)
     print(f"Saved trained model to {model_path_save}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train the model with text inputs.")
-    parser.add_argument("--num_epochs", type=int, help="Number of epochs to train.")
-    parser.add_argument("--min_val", type=float, help="Minimum value for generated data.")
-    parser.add_argument("--max_val", type=float, help="Maximum value for generated data.")
-    parser.add_argument("--model_name", type=str, help="Model name for loading.")
-    parser.add_argument("--shl", type=bool, help="Whether to use StepLR scheduler.")
-    parser.add_argument("--model_path_load", type=str, help="Path to save the trained model.")
+def build_parser():
+    parser = argparse.ArgumentParser(description="Train text-to-numeric projection alignment.")
     parser.add_argument("--config", type=str, required=True, help="Path to the YAML configuration file.")
-    parser.add_argument("--model_path_save", help="Path to save the trained model.", default="./chk/atrained_numeric_lm_stage2.pth")
-
-    # Parse arguments from command line
-
-    args = parser.parse_args()
-
-    # Load configuration from YAML file
-    with open(args.config, 'r') as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
-
-    # Override YAML settings with command-line arguments (if specified)
-    config['num_epochs'] = args.num_epochs if args.num_epochs is not None else config.get('num_epochs', 2)
-    config['min_val'] = args.min_val if args.min_val is not None else config.get('min_val', 0)
-    config['max_val'] = args.max_val if args.max_val is not None else config.get('max_val', 100)
-    config['model_name'] = args.model_name if args.model_name is not None else config.get('model_name', 'openai-community/gpt2')
-    config['shl'] = args.shl if args.shl is not None else config.get('shl', False)
-    config['model_path_save'] = args.model_path_save if args.model_path_save is not None else config.get('model_path', './chk/trained_numeric_lm.pth')
+    parser.add_argument("--num_epochs", type=int, help="Number of epochs to train.")
+    parser.add_argument("--num_batches", type=int, help="Number of batches per epoch.")
+    parser.add_argument("--batch_size", type=int, help="Batch size.")
+    parser.add_argument("--lr", type=float, help="Learning rate.")
+    parser.add_argument("--min_val", type=float, help="Minimum generated numeric value.")
+    parser.add_argument("--max_val", type=float, help="Maximum generated numeric value.")
+    parser.add_argument("--model_name", type=str, help="Hugging Face model name or local model path.")
+    parser.add_argument("--model_path_load", type=str, help="Checkpoint path to load before training.")
+    parser.add_argument("--model_path_save", type=str, help="Checkpoint path to save after training.")
+    parser.add_argument("--device", type=str, help="Device: auto, cpu, cuda, cuda:0, etc.")
+    parser.add_argument("--shl", type=str2bool, nargs="?", const=True, help="Whether to use StepLR scheduler.")
+    return parser
 
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # Example of instantiating the model for loading with project_input=True
-    llm = NumericLMWrapper(config['model_name'], project_input=False, project_output=True, device=device)
+if __name__ == "__main__":
+    args = build_parser().parse_args()
+    config = apply_overrides(load_config(args.config), args)
 
-    llm.configure_trainable_layers(train_input_projection=False, train_output_projection=True, train_transformer=False)
+    device = resolve_device(config["device"])
+    llm = NumericLMWrapper(config["model_name"], project_input=False, project_output=True, device=device)
+    llm.configure_trainable_layers(
+        train_input_projection=False,
+        train_output_projection=True,
+        train_transformer=False,
+    )
 
-    llm.mixed_input=False
-
-    # Ensure the tokenizer has a pad token set
     if llm.tokenizer.pad_token is None:
         llm.tokenizer.pad_token = llm.tokenizer.eos_token
 
-    alignmenttext(llm, config, config['num_epochs'], args.model_path_load, args.model_path_save, config['shl'])
+    alignmenttext(
+        llm,
+        config,
+        config["num_epochs"],
+        config.get("model_path_load"),
+        config["model_path_save"],
+        bool(config.get("shl", False)),
+    )

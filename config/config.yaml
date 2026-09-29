@@ -1,13 +1,13 @@
-num_batches: 10
-batch_size: 8
-lr: 0.001
-num_epochs: 60
-min_val: 0
-max_val: 100
 model_name: "openai-community/gpt2"
-shl: True
-model_path_load: "./chk/trained_numeric_lm_stage1.pth"
+device: "auto"
+
 num_batches: 50
 batch_size: 8
 lr: 0.003
-model_path_save:: "./chk/atrained_numeric_lm_stage2.pth"
+num_epochs: 60
+min_val: 0
+max_val: 100
+
+shl: true
+model_path_load: null
+model_path_save: "./chk/trained_numeric_lm_stage1.pth"
