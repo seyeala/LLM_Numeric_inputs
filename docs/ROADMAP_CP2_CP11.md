@@ -470,7 +470,7 @@ When those conditions are met, the repository can be called complete for its sta
 | --- | --- | --- |
 | CP1 | Stabilization | Complete: syntax/config only |
 | CP2 | Environment/dependencies | Complete: Python 3.12 + CUDA 12.6 env |
-| CP3 | Core contracts/checkpoints | Planned |
+| CP3 | Core contracts/checkpoints | Complete: package contracts + schema-v1 checkpoints |
 | CP4 | Automated tests | Planned |
 | CP5 | Deterministic data | Planned |
 | CP6 | Numeric alignment validation | Planned |

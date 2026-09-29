@@ -143,3 +143,18 @@ To inspect the active environment:
 ```
 
 CP2 evidence is recorded in `docs/checkpoints/CP02_ENVIRONMENT.md`.
+
+
+## CP3 core contracts
+
+Core package contracts are documented in `docs/checkpoints/CP03_CORE_CONTRACTS.md`.
+
+CP3 adds the `src/llm_numeric_inputs` package, centralized config/device/seed handling, explicit task modes, attention-mask-aware text pooling, projection-only checkpoint schema v1, and compatibility loading for legacy full-state checkpoints.
+
+The supported CP3 model contracts are:
+
+```text
+numeric_to_numeric: Tensor[batch, 1] -> Tensor[batch, 1]
+text_to_numeric: tokenized batch dict -> Tensor[batch, 1]
+mixed_to_numeric: intentionally deferred to CP8
+```

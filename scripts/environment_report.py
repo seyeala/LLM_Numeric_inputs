@@ -1,4 +1,4 @@
-﻿"""Print a machine-readable runtime environment report for experiment provenance."""
+"""Print a machine-readable runtime environment report for experiment provenance."""
 
 from __future__ import annotations
 
@@ -36,8 +36,7 @@ report = {
     "python_executable": sys.executable,
     "platform": platform.platform(),
     "packages": {
-        name: package_version(name)
-        for name in ("torch", "transformers", "numpy", "PyYAML", "pytest", "ruff")
+        name: package_version(name) for name in ("torch", "transformers", "numpy", "PyYAML", "pytest", "ruff")
     },
 }
 
