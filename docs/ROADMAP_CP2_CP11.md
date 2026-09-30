@@ -447,8 +447,8 @@ When those conditions are met, the repository can be called complete for its sta
 | CP7 | Text alignment validation | Complete: text-to-numeric pipeline + transfer init |
 | CP8 | Mixed architecture | Complete: sequence-inserted numeric embeddings |
 | CP9 | Minimum-task experiment | Complete: mixed minimum pipeline + smoke runs |
-| CP10 | Reproducible benchmarks | Planned |
-| CP11 | Release hardening | Planned |
+| CP10 | Reproducible benchmarks | Complete: structured run aggregation |
+| CP11 | Release hardening | Complete: CI + release documentation |
 
 ## Execution rule
 

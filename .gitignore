@@ -16,3 +16,4 @@ wandb/
 .pytest_cache/
 .ipynb_checkpoints/
 runs/
+benchmarks/generated/

@@ -243,3 +243,28 @@ CP9 validates the repaired mixed text/numeric wrapper on the minimum-number task
 ```
 
 CP9 closure evidence is recorded in `docs/checkpoints/CP09_MINIMUM_TASK.md`.
+
+
+## CP10 benchmark aggregation
+
+Structured run directories can be aggregated into local benchmark tables with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\collect_benchmark_results.py --runs-root runs --output-dir benchmarks\generated
+```
+
+This writes `benchmark_results.json` and `benchmark_results.csv` under `benchmarks/generated/`. Those outputs are generated artifacts and are not committed.
+CP10 closure evidence is recorded in `docs/checkpoints/CP10_BENCHMARKS.md`.
+
+
+## Release and reproducibility
+
+Release and reproducibility guidance is documented in:
+
+```text
+docs/REPRODUCIBILITY.md
+docs/RELEASE_CHECKLIST.md
+docs/checkpoints/CP11_RELEASE.md
+```
+
+The branch includes a GitHub Actions workflow at `.github/workflows/tests.yml` that runs install, Ruff, pytest, and pip checks on push and pull request.
