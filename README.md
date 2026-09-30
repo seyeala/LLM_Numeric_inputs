@@ -172,3 +172,22 @@ Run the CP4 validation suite with:
 ```
 
 The test suite uses tiny local dummy model/tokenizer fixtures and does not require Hugging Face downloads.
+
+
+## CP5 deterministic data
+
+Deterministic data generation and validation are documented in `docs/checkpoints/CP05_DATA.md`.
+
+Generate data with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_dataset.py --task minimum --count 50 --seed 42 --output-dir data\generated\cp5_smoke_minimum
+```
+
+Validate data with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_dataset.py --manifest data\generated\cp5_smoke_minimum\manifest.json
+```
+
+The legacy JSONL files under `dataset/` are retained for provenance. New generated datasets should be written under ignored generated-data directories and accompanied by a manifest.

@@ -1,0 +1,9 @@
+{"input": "Among the chosen numbers $$43.89&&, find the lowest number.", "output": "43.89"}
+{"input": "Among the numbers $$85.86&& and $$69.74&& and $$9.42&& and $$97.56&& and $$76.11&& and $$78.61&& and $$12.81&& and $$45.04&&, which is the least among them?", "output": "9.42"}
+{"input": "Observing the numbers $$92.68&& and $$64.39&& and $$82.28&& and $$44.34&& and $$22.72&& and $$55.46&&, determine the smallest value.", "output": "22.72"}
+{"input": "Given the numbers $$6.38&& and $$82.76&& and $$63.17&& and $$75.81&&, find the lowest number.", "output": "6.38"}
+{"input": "Selecting from $$97.07&& and $$89.31&& and $$77.84&& and $$19.46&& and $$46.67&& and $$4.38&& and $$15.43&& and $$68.30&&, point out the lowest number.", "output": "4.38"}
+{"input": "When comparing $$74.48&& and $$96.75&& and $$32.58&& and $$37.05&&, decipher the smallest number.", "output": "32.58"}
+{"input": "Looking over $$18.95&&, can you identify the smallest value?", "output": "18.95"}
+{"input": "Among the numbers $$12.99&& and $$47.57&& and $$22.69&& and $$66.98&& and $$43.72&&, which number is the least?", "output": "12.99"}
+{"input": "From the list $$70.03&& and $$31.24&&, determine the smallest value.", "output": "31.24"}

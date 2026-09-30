@@ -10,6 +10,8 @@ __pycache__/
 *.path
 chk/
 /checkpoints/
+data/generated/
+dataset/generated/
 wandb/
 .pytest_cache/
 .ipynb_checkpoints/

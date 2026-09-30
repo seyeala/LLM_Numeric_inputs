@@ -1,0 +1,2 @@
+{"input": "Among the numbers $$70.52&& and $$78.07&& and $$45.89&& and $$56.87&& and $$13.98&& and $$11.45&& and $$66.84&& and $$47.11&&, point out the lowest number.", "output": "11.45"}
+{"input": "From the list $$56.52&& and $$76.50&& and $$63.47&& and $$55.36&& and $$55.92&& and $$30.40&& and $$3.08&&, point out the lowest number.", "output": "3.08"}

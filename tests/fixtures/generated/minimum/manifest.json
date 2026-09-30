@@ -1,0 +1,48 @@
+{
+  "count": 12,
+  "counts": {
+    "test": 2,
+    "train": 9,
+    "validation": 1
+  },
+  "extra": {
+    "max_terms": 10,
+    "min_terms": 1,
+    "minimum_decimals": 2,
+    "numeric_decimals": 4,
+    "split_ratios": {
+      "test": 0.1,
+      "train": 0.8,
+      "validation": 0.1
+    }
+  },
+  "files": {
+    "test.jsonl": {
+      "rows": 2,
+      "sha256": "974971261c5345cc7353e673883eda669b0047555571e865d6321c1f8edf49a7",
+      "split": "test"
+    },
+    "train.jsonl": {
+      "rows": 9,
+      "sha256": "263662c75cf754e9eb7c38de0e25922fcaa64b6199742d8a269c2dcd753e88aa",
+      "split": "train"
+    },
+    "validation.jsonl": {
+      "rows": 1,
+      "sha256": "ebb82fce4508189639659d1786266318365a6c9871572fc61d65375655fc3139",
+      "split": "validation"
+    }
+  },
+  "generator": {
+    "git_sha": "385027f4e0e1cabb3d9e831f9466e3f9f0c0067a",
+    "numpy": "2.5.3",
+    "python": "3.12.10"
+  },
+  "numeric_range": [
+    0.0,
+    100.0
+  ],
+  "schema_version": 1,
+  "seed": 42,
+  "task": "minimum"
+}

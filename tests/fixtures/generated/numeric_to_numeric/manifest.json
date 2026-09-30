@@ -1,0 +1,48 @@
+{
+  "count": 12,
+  "counts": {
+    "test": 2,
+    "train": 9,
+    "validation": 1
+  },
+  "extra": {
+    "max_terms": 10,
+    "min_terms": 1,
+    "minimum_decimals": 2,
+    "numeric_decimals": 4,
+    "split_ratios": {
+      "test": 0.1,
+      "train": 0.8,
+      "validation": 0.1
+    }
+  },
+  "files": {
+    "test.jsonl": {
+      "rows": 2,
+      "sha256": "f82bc15c71c65283012f8f82415babd5292b8f2b157b52dee1b7e569893b022a",
+      "split": "test"
+    },
+    "train.jsonl": {
+      "rows": 9,
+      "sha256": "b8d7cb94fde95a994deca4cc3f057b9dca53f532031e261421519def36330538",
+      "split": "train"
+    },
+    "validation.jsonl": {
+      "rows": 1,
+      "sha256": "99675d2f1a137d9b74c4022b7980f2aebda93a550825ceda11aabbceed344965",
+      "split": "validation"
+    }
+  },
+  "generator": {
+    "git_sha": "385027f4e0e1cabb3d9e831f9466e3f9f0c0067a",
+    "numpy": "2.5.3",
+    "python": "3.12.10"
+  },
+  "numeric_range": [
+    0.0,
+    100.0
+  ],
+  "schema_version": 1,
+  "seed": 42,
+  "task": "numeric_to_numeric"
+}
