@@ -1,4 +1,4 @@
-﻿# Completion Roadmap â€” CP2 through CP11
+# Completion Roadmap â€” CP2 through CP11
 
 This roadmap defines the ten remaining checkpoints required to turn `LLM_Numeric_inputs` from an experimental prototype into a reproducible, tested research repository.
 
@@ -44,13 +44,11 @@ Each checkpoint should land as a separate commit or small commit series and must
 
 ## CP2 â€” Reproducible environment and dependency baseline
 
-#
 
 ## Objective
 
 Create one supported local environment that can actually import and run the project on this workstation.
 
-#
 
 ## Deliverables
 
@@ -73,7 +71,6 @@ Create one supported local environment that can actually import and run the proj
 - No dependency named `data` or unrelated CUDA 11/CUDA 12 package mixture remains in the direct dependency list.
 - Exact tested versions are written to an environment/lock artifact.
 
-#
 
 ## CP2 closure evidence
 
@@ -83,13 +80,11 @@ Record the successful install commands, package versions, CUDA status, and the e
 
 ## CP3 â€” Core library, configuration, and checkpoint contracts
 
-#
 
 ## Objective
 
 Turn the current scripts into explicit reusable components before adding more experiments.
 
-#
 
 ## Deliverables
 
@@ -114,7 +109,6 @@ Turn the current scripts into explicit reusable components before adding more ex
 - A saved checkpoint round-trips into an equivalent model configuration.
 - Legacy checkpoints either load through a documented compatibility path or fail with a precise migration message.
 
-#
 
 ## CP3 closure evidence
 
@@ -124,13 +118,11 @@ Document the public API, tensor contracts, checkpoint format version, and legacy
 
 ## CP4 â€” Automated offline test harness
 
-#
 
 ## Objective
 
 Make regressions detectable before running expensive training.
 
-#
 
 ## Deliverables
 
@@ -156,7 +148,6 @@ Make regressions detectable before running expensive training.
 
 Mixed-mode functional tests are intentionally deferred until CP8; CP4 may assert that unsupported mixed behavior fails explicitly rather than silently.
 
-#
 
 ## CP4 closure evidence
 
@@ -166,13 +157,11 @@ Store test inventory, commands, and results in `docs/checkpoints/CP04_TESTS.md`.
 
 ## CP5 â€” Deterministic dataset pipeline
 
-#
 
 ## Objective
 
 Replace ad hoc generated files with a reproducible data-generation contract.
 
-#
 
 ## Deliverables
 
@@ -199,7 +188,6 @@ Replace ad hoc generated files with a reproducible data-generation contract.
 
 History rewriting or Git LFS migration is optional and must be treated as a separate destructive repository-maintenance decision.
 
-#
 
 ## CP5 closure evidence
 
@@ -209,13 +197,11 @@ Write generator commands, manifest examples, data schema, and migration notes in
 
 ## CP6 â€” Numeric-to-numeric validated experiment
 
-#
 
 ## Objective
 
 Establish the first end-to-end scientifically reproducible training path.
 
-#
 
 ## Deliverables
 
@@ -241,7 +227,6 @@ Establish the first end-to-end scientifically reproducible training path.
 
 Scientific failure does not block CP6 if the pipeline is valid and the negative result is documented.
 
-#
 
 ## CP6 closure evidence
 
@@ -251,13 +236,11 @@ Store the canonical commands, metric definitions, seeded result table, and artif
 
 ## CP7 â€” Text-to-numeric validated experiment
 
-#
 
 ## Objective
 
 Validate text-token representations as inputs to the numeric output projection and quantify whether Stage-1 initialization helps.
 
-#
 
 ## Deliverables
 
@@ -279,7 +262,6 @@ Validate text-token representations as inputs to the numeric output projection a
 - In-range and robustness/OOD metrics are reported separately.
 - README does not state a text-to-number error rate unless it points to the reproducible CP7 result.
 
-#
 
 ## CP7 closure evidence
 
@@ -289,13 +271,11 @@ Document the experiment design, initialization comparison, robustness sets, and 
 
 ## CP8 â€” Correct mixed text/numeric embedding architecture
 
-#
 
 ## Objective
 
 Implement the core mixed-input mechanism correctly rather than concatenating hidden dimensions.
 
-#
 
 ## Design
 
@@ -320,7 +300,6 @@ This preserves the transformer's required hidden dimension while giving each num
 - Remove the unused/collapsed `_process_mixed_input` behavior.
 - Add an embedding-construction unit test that verifies numeric vectors occupy the intended sequence positions.
 
-#
 
 ## Acceptance criteria
 
@@ -331,7 +310,6 @@ This preserves the transformer's required hidden dimension while giving each num
 - A one-step mixed training test produces finite loss and gradients in the intended projection layers.
 - Transformer weights remain frozen in the default mixed configuration.
 
-#
 
 ## CP8 closure evidence
 
@@ -341,13 +319,11 @@ Document the sequence construction algorithm and tests in `docs/checkpoints/CP08
 
 ## CP9 â€” Minimum-number mixed-task experiment
 
-#
 
 ## Objective
 
 Use the repaired mixed architecture on the repository's actual algorithmic task: selecting the minimum from text containing one or more numeric values.
 
-#
 
 ## Deliverables
 
@@ -360,7 +336,6 @@ Use the repaired mixed architecture on the repository's actual algorithmic task:
 - Evaluate multiple seeds.
 - If desired, add transformer fine-tuning/LoRA only as a secondary labeled experiment after the frozen-transformer result is established.
 
-#
 
 ## Acceptance criteria
 
@@ -379,13 +354,11 @@ Write the protocol, baselines, split logic, seeded results, and failure analysis
 
 ## CP10 â€” Reproducible benchmark and experiment system
 
-#
 
 ## Objective
 
 Replace the legacy spreadsheets with machine-readable, rerunnable benchmark artifacts and scale the validated experiments to the intended models.
 
-#
 
 ## Deliverables
 
@@ -409,7 +382,6 @@ Replace the legacy spreadsheets with machine-readable, rerunnable benchmark arti
 - README performance statements refer only to CP10 artifacts.
 - Any failure to reproduce the historical 2%/25% figures is reported plainly.
 
-#
 
 ## CP10 closure evidence
 
@@ -419,13 +391,11 @@ Store benchmark methodology, environment, canonical run IDs, result tables, and 
 
 ## CP11 â€” CI, documentation, packaging, and release acceptance
 
-#
 
 ## Objective
 
 Make the repository maintainable by someone other than the original experiment author and close the project as a reproducible research release.
 
-#
 
 ## Deliverables
 
@@ -471,7 +441,7 @@ When those conditions are met, the repository can be called complete for its sta
 | CP1 | Stabilization | Complete: syntax/config only |
 | CP2 | Environment/dependencies | Complete: Python 3.12 + CUDA 12.6 env |
 | CP3 | Core contracts/checkpoints | Complete: package contracts + schema-v1 checkpoints |
-| CP4 | Automated tests | Planned |
+| CP4 | Automated tests | Complete: offline pytest suite |
 | CP5 | Deterministic data | Planned |
 | CP6 | Numeric alignment validation | Planned |
 | CP7 | Text alignment validation | Planned |

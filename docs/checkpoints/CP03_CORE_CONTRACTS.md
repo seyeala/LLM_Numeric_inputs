@@ -1,4 +1,4 @@
-# CP3 ? Core contracts and checkpoint schema
+# CP3 - Core contracts and checkpoint schema
 
 Date: 2026-09-29
 Repository: `F:\\LLM_Numeric_inputs`

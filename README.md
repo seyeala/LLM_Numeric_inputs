@@ -158,3 +158,17 @@ numeric_to_numeric: Tensor[batch, 1] -> Tensor[batch, 1]
 text_to_numeric: tokenized batch dict -> Tensor[batch, 1]
 mixed_to_numeric: intentionally deferred to CP8
 ```
+
+
+## CP4 offline tests
+
+Formal offline tests are documented in `docs/checkpoints/CP04_TESTS.md`.
+
+Run the CP4 validation suite with:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\ruff.exe check src scripts tests alignmentNN.py alignmentTextN.py alignmentMixedN.py wrapperNM.py
+```
+
+The test suite uses tiny local dummy model/tokenizer fixtures and does not require Hugging Face downloads.

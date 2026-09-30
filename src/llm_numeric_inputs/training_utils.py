@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 import torch
 from torch import nn
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.optim import Adam, lr_scheduler
 
 from llm_numeric_inputs.config import TrainConfig
@@ -34,13 +34,16 @@ def train_projection_epochs(
     batch_factory: Callable[[], tuple[object, torch.Tensor]],
 ) -> None:
     device = next(llm.parameters()).device
-    optimizer = Adam(filter(lambda param: param.requires_grad, llm.parameters()), lr=config.lr)
+    trainable_params = [param for param in llm.parameters() if param.requires_grad]
+    if not trainable_params:
+        raise ValueError("No trainable parameters are enabled.")
+    optimizer = Adam(trainable_params, lr=config.lr)
     scheduler = (
         lr_scheduler.StepLR(optimizer, step_size=config.scheduler_step_size, gamma=config.scheduler_gamma)
         if config.shl
         else None
     )
-    scaler = GradScaler(enabled=device.type == "cuda")
+    scaler = GradScaler("cuda", enabled=device.type == "cuda")
     llm.train()
     for epoch in range(config.num_epochs):
         start = time.time()
@@ -48,7 +51,7 @@ def train_projection_epochs(
         for _ in range(config.num_batches):
             batch_inputs, batch_targets = batch_factory()
             optimizer.zero_grad(set_to_none=True)
-            with autocast(enabled=device.type == "cuda"):
+            with autocast(device_type=device.type, enabled=device.type == "cuda"):
                 outputs = llm(batch_inputs)
                 loss = nn.MSELoss()(outputs, batch_targets)
                 loss_sum += float(loss.item())
