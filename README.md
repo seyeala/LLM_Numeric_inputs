@@ -222,3 +222,12 @@ Smoke entry points:
 ```
 
 CP7 validates the pipeline. Canonical GPT-2/GPT-2 Large benchmark claims remain deferred to CP10.
+
+
+## CP8 mixed text/numeric architecture
+
+CP8 implements the repaired mixed embedding path documented in `docs/checkpoints/CP08_MIXED_ARCHITECTURE.md`.
+
+Mixed inputs use `$$value&&` markers. Each marker is projected into one numeric embedding token and inserted into the transformer embedding sequence at the marker position. Text embeddings and numeric embeddings are concatenated along the sequence dimension, preserving the model hidden size.
+
+`alignmentMixedN.py` now uses `InputMode.MIXED_TO_NUMERIC`; the task-level minimum-number experiment is deferred to CP9.

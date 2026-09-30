@@ -1,7 +1,4 @@
 import importlib
-import sys
-
-import pytest
 
 import wrapperNM
 
@@ -18,9 +15,10 @@ def test_wrappernm_reexports_wrapper():
     assert hasattr(wrapperNM, "load_specific_weights")
 
 
-def test_mixed_entrypoint_reports_cp8_deferral(monkeypatch):
+def test_mixed_entrypoint_parser_is_active():
     import alignmentMixedN
 
-    monkeypatch.setattr(sys, "argv", ["alignmentMixedN.py", "--config", "config/config.yaml"])
-    with pytest.raises(SystemExit, match="disabled in CP3"):
-        alignmentMixedN.main()
+    parser = alignmentMixedN.build_parser()
+    args = parser.parse_args(["--config", "config/config.yaml", "--num_epochs", "1"])
+    assert args.config == "config/config.yaml"
+    assert args.num_epochs == 1

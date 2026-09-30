@@ -29,8 +29,12 @@ class TinyTokenizer:
     def _encode(self, text: str) -> list[int]:
         return [min(ord(ch), self.vocab_size - 1) for ch in text]
 
-    def __call__(self, texts, return_tensors="pt", padding=True, truncation=True):
-        del return_tensors, padding, truncation
+    def encode(self, text: str, add_special_tokens: bool = False):
+        del add_special_tokens
+        return self._encode(text)
+
+    def __call__(self, texts, return_tensors="pt", padding=True, truncation=True, **kwargs):
+        del return_tensors, padding, truncation, kwargs
         if isinstance(texts, str):
             texts = [texts]
         encoded = [self._encode(text) or [1] for text in texts]
@@ -57,6 +61,10 @@ class TinyCausalLM(nn.Module):
         self.config = SimpleNamespace(hidden_size=hidden_size, n_positions=n_positions)
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         self.linear = nn.Linear(hidden_size, hidden_size)
+        self.last_inputs_embeds_shape = None
+
+    def get_input_embeddings(self):
+        return self.embedding
 
     def forward(
         self,
@@ -71,5 +79,6 @@ class TinyCausalLM(nn.Module):
             if input_ids is None:
                 raise ValueError("TinyCausalLM requires input_ids or inputs_embeds.")
             inputs_embeds = self.embedding(input_ids)
+        self.last_inputs_embeds_shape = tuple(inputs_embeds.shape)
         hidden = self.linear(inputs_embeds)
         return SimpleNamespace(logits=hidden, hidden_states=(hidden,))

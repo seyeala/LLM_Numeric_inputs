@@ -1,7 +1,8 @@
-"""Numeric language-model wrapper with explicit CP3 contracts."""
+"""Numeric language-model wrapper with explicit task contracts."""
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import torch
@@ -10,6 +11,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from llm_numeric_inputs.modes import InputMode, NumericSequenceStrategy
 from llm_numeric_inputs.pooling import last_valid_token_pool
+
+MIXED_NUMERIC_PATTERN = re.compile(r"\$\$(.*?)&&")
 
 
 def _hidden_size(config: Any) -> int:
@@ -41,10 +44,14 @@ def _legacy_mode(project_input: bool, project_output: bool, mixed_input: bool) -
 class NumericLMWrapper(nn.Module):
     """Wrap a causal LM with scalar numeric input/output projections.
 
-    Formal CP3 contracts:
+    Formal contracts:
     - numeric_to_numeric: Tensor [B, 1] -> Tensor [B, 1]
     - text_to_numeric: tokenized batch dict -> Tensor [B, 1]
-    - mixed_to_numeric: deferred to CP8 and raises NotImplementedError.
+    - mixed_to_numeric: dict{"input_text": list[str]} -> Tensor [B, 1]
+
+    Mixed inputs use $$value&& markers. Each marker is replaced by one learned
+    numeric embedding token while ordinary text segments use base-model token
+    embeddings. The transformer hidden dimension is preserved.
     """
 
     def __init__(
@@ -98,6 +105,95 @@ class NumericLMWrapper(nn.Module):
             raise RuntimeError("Base model did not return hidden states.")
         return hidden_states[-1]
 
+    def _input_embedding_layer(self) -> nn.Module:
+        if hasattr(self.model, "get_input_embeddings"):
+            layer = self.model.get_input_embeddings()
+            if layer is not None:
+                return layer
+        for attr in ("embedding", "embed_tokens"):
+            layer = getattr(self.model, attr, None)
+            if layer is not None:
+                return layer
+        transformer = getattr(self.model, "transformer", None)
+        layer = getattr(transformer, "wte", None)
+        if layer is not None:
+            return layer
+        raise AttributeError("Base model does not expose an input embedding layer.")
+
+    def _token_ids_for_segment(self, segment: str) -> torch.Tensor:
+        if self.tokenizer is None:
+            raise ValueError("mixed text segments require a tokenizer.")
+        if hasattr(self.tokenizer, "encode"):
+            try:
+                ids = self.tokenizer.encode(segment, add_special_tokens=False)
+            except TypeError:
+                ids = self.tokenizer.encode(segment)
+        else:
+            encoded = self.tokenizer(segment, return_tensors="pt", padding=False, truncation=False)
+            ids = encoded["input_ids"]
+        if torch.is_tensor(ids):
+            ids = ids.detach().cpu().tolist()
+        if ids and isinstance(ids[0], list):
+            ids = ids[0]
+        return torch.tensor(ids, dtype=torch.long, device=self.device)
+
+    def _parse_mixed_text(self, text: str) -> list[tuple[str, str | float]]:
+        if not isinstance(text, str):
+            raise TypeError("mixed input_text entries must be strings.")
+        pieces: list[tuple[str, str | float]] = []
+        position = 0
+        for match in MIXED_NUMERIC_PATTERN.finditer(text):
+            segment = text[position : match.start()]
+            if "$$" in segment or "&&" in segment:
+                raise ValueError(f"Malformed numeric marker near {segment!r}.")
+            if segment:
+                pieces.append(("text", segment))
+            number_text = match.group(1).strip()
+            if not number_text:
+                raise ValueError("Empty numeric marker is not allowed.")
+            try:
+                value = float(number_text)
+            except ValueError as error:
+                raise ValueError(f"Invalid numeric marker value: {number_text!r}") from error
+            pieces.append(("number", value))
+            position = match.end()
+        tail = text[position:]
+        if "$$" in tail or "&&" in tail:
+            raise ValueError(f"Malformed numeric marker near {tail!r}.")
+        if tail:
+            pieces.append(("text", tail))
+        if not pieces:
+            raise ValueError("Each mixed input sample must contain text or at least one numeric marker.")
+        return pieces
+
+    def _mixed_sequence_embeddings(self, text: str) -> torch.Tensor:
+        token_embedding = self._input_embedding_layer().to(self.device)
+        vectors: list[torch.Tensor] = []
+        for kind, value in self._parse_mixed_text(text):
+            if kind == "text":
+                token_ids = self._token_ids_for_segment(str(value))
+                if token_ids.numel() > 0:
+                    vectors.append(token_embedding(token_ids.unsqueeze(0)).squeeze(0))
+            else:
+                numeric = torch.tensor([[float(value)]], dtype=torch.float32, device=self.device)
+                vectors.append(self.input_projection(numeric))
+        if not vectors:
+            raise ValueError("Mixed input produced no sequence embeddings.")
+        return torch.cat(vectors, dim=0)
+
+    def _mixed_batch_embeddings(self, texts: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
+        sequences = [self._mixed_sequence_embeddings(text) for text in texts]
+        batch_size = len(sequences)
+        max_len = max(sequence.shape[0] for sequence in sequences)
+        hidden_size = sequences[0].shape[1]
+        inputs_embeds = torch.zeros(batch_size, max_len, hidden_size, device=self.device)
+        attention_mask = torch.zeros(batch_size, max_len, dtype=torch.long, device=self.device)
+        for row, sequence in enumerate(sequences):
+            length = sequence.shape[0]
+            inputs_embeds[row, :length, :] = sequence
+            attention_mask[row, :length] = 1
+        return inputs_embeds, attention_mask
+
     def forward_numeric(self, inputs: torch.Tensor) -> torch.Tensor:
         """Map numeric tensor [B, 1] to numeric tensor [B, 1]."""
         if not torch.is_tensor(inputs):
@@ -131,7 +227,22 @@ class NumericLMWrapper(nn.Module):
         return self.output_projection(pooled)
 
     def forward_mixed(self, inputs: dict[str, Any]) -> torch.Tensor:
-        raise NotImplementedError("mixed_to_numeric is deferred to CP8; current mixed code is not a validated path.")
+        """Map mixed text/numeric-marker inputs to numeric tensor [B, 1]."""
+        if not isinstance(inputs, dict) or "input_text" not in inputs:
+            raise ValueError("mixed inputs must be a dict containing 'input_text'.")
+        text_inputs = inputs["input_text"]
+        if isinstance(text_inputs, str):
+            texts = [text_inputs]
+        elif isinstance(text_inputs, (list, tuple)):
+            texts = list(text_inputs)
+        else:
+            raise TypeError("mixed input_text must be a string or a list/tuple of strings.")
+        if not texts:
+            raise ValueError("mixed input_text must not be empty.")
+        inputs_embeds, attention_mask = self._mixed_batch_embeddings(texts)
+        hidden = self._model_hidden_states(inputs_embeds=inputs_embeds, attention_mask=attention_mask)
+        pooled = last_valid_token_pool(hidden, attention_mask)
+        return self.output_projection(pooled)
 
     def forward(self, inputs):
         if self.mode == InputMode.NUMERIC_TO_NUMERIC:

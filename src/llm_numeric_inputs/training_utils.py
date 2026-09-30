@@ -28,6 +28,16 @@ def generate_text_numeric_batch(
     return tokenized, values.to(device)
 
 
+def generate_mixed_numeric_batch(
+    config: TrainConfig,
+    device: torch.device,
+) -> tuple[dict[str, list[str]], torch.Tensor]:
+    """Generate mixed text/numeric-marker inputs and numeric targets."""
+    values = torch.rand(config.batch_size, 1) * (config.max_val - config.min_val) + config.min_val
+    text_inputs = [f"The measured value is $${number.item()}&&." for number in values]
+    return {"input_text": text_inputs}, values.to(device)
+
+
 def train_projection_epochs(
     llm: torch.nn.Module,
     config: TrainConfig,
