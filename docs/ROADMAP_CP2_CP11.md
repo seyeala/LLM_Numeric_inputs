@@ -444,7 +444,7 @@ When those conditions are met, the repository can be called complete for its sta
 | CP4 | Automated tests | Complete: offline pytest suite |
 | CP5 | Deterministic data | Complete: seeded generators + manifests + validation |
 | CP6 | Numeric alignment validation | Complete: dataset-backed numeric run pipeline |
-| CP7 | Text alignment validation | Planned |
+| CP7 | Text alignment validation | Complete: text-to-numeric pipeline + transfer init |
 | CP8 | Mixed architecture | Planned |
 | CP9 | Minimum-task experiment | Planned |
 | CP10 | Reproducible benchmarks | Planned |

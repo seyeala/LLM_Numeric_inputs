@@ -206,3 +206,19 @@ Offline smoke example:
 ```
 
 CP6 evidence is recorded in `docs/checkpoints/CP06_NUMERIC_ALIGNMENT.md`.
+
+
+## CP7 text-to-numeric validation
+
+Text-to-numeric experiment support is documented in `docs/checkpoints/CP07_TEXT_ALIGNMENT.md`.
+
+CP7 adds dataset-backed `text_to_numeric` training/evaluation from CP5 manifests, structured run directories, schema-v1 projection checkpoints, fresh initialization, and transfer initialization from compatible checkpoints.
+
+Smoke entry points:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_text_alignment.py --config configs\cp7_text_smoke.yaml --manifest dataset\generated\cp7_text_smoke\manifest.json --output-dir runs\cp7_text_smoke
+.\.venv\Scripts\python.exe scripts\evaluate_text_alignment.py --checkpoint runs\cp7_text_smoke\cp7_text_smoke\checkpoint.pth --manifest dataset\generated\cp7_text_smoke\manifest.json --split test --batch-size 8 --device cpu
+```
+
+CP7 validates the pipeline. Canonical GPT-2/GPT-2 Large benchmark claims remain deferred to CP10.

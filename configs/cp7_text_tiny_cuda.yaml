@@ -1,0 +1,19 @@
+validation_split: validation
+test_split: test
+run_id: cp7_text_tiny_cuda
+initialization: fresh
+tiny_hidden_size: 8
+tiny_n_positions: 16
+train:
+  model_name: "__tiny_numeric_lm__"
+  device: "cuda:0"
+  batch_size: 8
+  lr: 0.003
+  num_epochs: 1
+  num_batches: 1
+  min_val: 0
+  max_val: 100
+  seed: 708
+  deterministic: false
+  shl: false
+  model_path_save: "./chk/cp7_text_tiny_cuda.pth"
