@@ -231,3 +231,15 @@ CP8 implements the repaired mixed embedding path documented in `docs/checkpoints
 Mixed inputs use `$$value&&` markers. Each marker is projected into one numeric embedding token and inserted into the transformer embedding sequence at the marker position. Text embeddings and numeric embeddings are concatenated along the sequence dimension, preserving the model hidden size.
 
 `alignmentMixedN.py` now uses `InputMode.MIXED_TO_NUMERIC`; the task-level minimum-number experiment is deferred to CP9.
+
+
+## CP9 minimum mixed task
+
+CP9 validates the repaired mixed text/numeric wrapper on the minimum-number task using deterministic CP5 data. The runnable entry points are:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_minimum_mixed.py --config configs\cp9_minimum_smoke.yaml --manifest dataset\generated\cp9_minimum_smoke\manifest.json --output-dir runs\cp9_minimum_smoke
+.\.venv\Scripts\python.exe scripts\evaluate_minimum_mixed.py --checkpoint runs\cp9_minimum_smoke\cp9_minimum_smoke\checkpoint.pth --manifest dataset\generated\cp9_minimum_smoke\manifest.json --split test
+```
+
+CP9 closure evidence is recorded in `docs/checkpoints/CP09_MINIMUM_TASK.md`.

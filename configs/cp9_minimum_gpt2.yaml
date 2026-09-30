@@ -1,0 +1,19 @@
+validation_split: validation
+test_split: test
+run_id: cp9_minimum_gpt2
+train:
+  model_name: "openai-community/gpt2"
+  device: "cuda:0"
+  batch_size: 8
+  lr: 0.003
+  num_epochs: 2
+  num_batches: 50
+  min_val: 0
+  max_val: 100
+  seed: 911
+  deterministic: false
+  shl: true
+  scheduler_step_size: 10
+  scheduler_gamma: 0.1
+  model_path_load: null
+  model_path_save: "./chk/cp9_minimum_gpt2.pth"

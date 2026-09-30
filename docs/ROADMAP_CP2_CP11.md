@@ -446,7 +446,7 @@ When those conditions are met, the repository can be called complete for its sta
 | CP6 | Numeric alignment validation | Complete: dataset-backed numeric run pipeline |
 | CP7 | Text alignment validation | Complete: text-to-numeric pipeline + transfer init |
 | CP8 | Mixed architecture | Complete: sequence-inserted numeric embeddings |
-| CP9 | Minimum-task experiment | Planned |
+| CP9 | Minimum-task experiment | Complete: mixed minimum pipeline + smoke runs |
 | CP10 | Reproducible benchmarks | Planned |
 | CP11 | Release hardening | Planned |
 
