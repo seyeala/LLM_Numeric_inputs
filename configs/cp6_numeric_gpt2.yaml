@@ -1,0 +1,19 @@
+validation_split: validation
+test_split: test
+train:
+  model_name: "openai-community/gpt2"
+  device: "cuda:0"
+  num_batches: 1
+  batch_size: 32
+  lr: 0.003
+  num_epochs: 1
+  min_val: 0
+  max_val: 100
+  seed: 606
+  deterministic: false
+  shl: false
+  scheduler_step_size: 10
+  scheduler_gamma: 0.1
+  numeric_sequence_strategy: "single_token"
+  model_path_load: null
+  model_path_save: "./chk/cp6_numeric_gpt2.pth"

@@ -443,7 +443,7 @@ When those conditions are met, the repository can be called complete for its sta
 | CP3 | Core contracts/checkpoints | Complete: package contracts + schema-v1 checkpoints |
 | CP4 | Automated tests | Complete: offline pytest suite |
 | CP5 | Deterministic data | Complete: seeded generators + manifests + validation |
-| CP6 | Numeric alignment validation | Planned |
+| CP6 | Numeric alignment validation | Complete: dataset-backed numeric run pipeline |
 | CP7 | Text alignment validation | Planned |
 | CP8 | Mixed architecture | Planned |
 | CP9 | Minimum-task experiment | Planned |

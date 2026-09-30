@@ -191,3 +191,18 @@ Validate data with:
 ```
 
 The legacy JSONL files under `dataset/` are retained for provenance. New generated datasets should be written under ignored generated-data directories and accompanied by a manifest.
+
+
+## CP6 numeric alignment experiment
+
+CP6 adds a dataset-backed numeric-to-numeric experiment pipeline. It uses CP5 numeric manifests, writes structured run directories, saves projection-only schema-v1 checkpoints, and reports independent validation/test regression metrics.
+
+Offline smoke example:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_dataset.py --task numeric_to_numeric --count 64 --seed 606 --output-dir dataset\generated\cp6_numeric_smoke
+.\.venv\Scripts\python.exe scripts	rain_numeric_alignment.py --config configs\cp6_numeric_smoke.yaml --manifest dataset\generated\cp6_numeric_smoke\manifest.json --output-dir runs\cp6_numeric_smoke
+.\.venv\Scripts\python.exe scripts\evaluate_numeric_alignment.py --checkpoint runs\cp6_numeric_smoke\cp6_numeric_smoke\checkpoint.pth --manifest dataset\generated\cp6_numeric_smoke\manifest.json --split test --output runs\cp6_numeric_smoke\cp6_numeric_smoke	est_eval_repeat.json
+```
+
+CP6 evidence is recorded in `docs/checkpoints/CP06_NUMERIC_ALIGNMENT.md`.
